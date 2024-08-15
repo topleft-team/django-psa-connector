@@ -97,8 +97,8 @@ class Synchronizer:
             results.skipped_count, results.deleted_count
 
     def _instance_ids(self):
-        ids = self.model_class.objects.all().order_by(self.lookup_key)\
-            .values_list(self.lookup_key, flat=True)
+        ids = self.model_class.objects.all().order_by('id')\
+            .values_list('id', flat=True)
         return set(ids)
 
     def fetch_records(self, results, conditions=None):
@@ -164,7 +164,8 @@ class Synchronizer:
         raise NotImplementedError
 
     def _unpack_records(self, response):
-        raise NotImplementedError
+        records = response.json()[self.response_key]
+        return records
 
     @staticmethod
     def _assign_null_relation(instance, model_field):
@@ -287,7 +288,7 @@ class Synchronizer:
 
 class TicketSynchronizer(Synchronizer):
     endpoint = 'Tickets'
-    response_key = 'tickets'
+    response_key = endpoint.lower()
     model_class = models.Ticket
 
     params = {
@@ -300,10 +301,6 @@ class TicketSynchronizer(Synchronizer):
         'priority_id': (models.Priority, 'priority'),
         'agent_id': (models.Agent, 'agent'),
     }
-
-    def _unpack_records(self, response):
-        records = response.json()['tickets']
-        return records
 
     def _assign_field_data(self, instance, json_data):
         # summary
@@ -338,4 +335,62 @@ class StatusSynchronizer(Synchronizer):
 
         instance.id = json_data.get('id')
         instance.name = json_data.get('name')
+        instance.colour = json_data.get('colour')
+
+
+class PrioritySynchronizer(Synchronizer):
+    endpoint = 'Priority'
+    response_key = None
+    model_class = models.Priority
+    params = {}
+    lookup_key = 'priorityid'
+
+    def _unpack_records(self, response):
+        records = response.json()
+        return records
+
+    def _assign_field_data(self, instance, json_data):
+
+        instance.id = json_data.get('priorityid')
+        instance.name = json_data.get('name')
+        instance.colour = json_data.get('colour')
+        instance.is_hidden = json_data.get('ishidden')
+
+
+class ClientSynchronizer(Synchronizer):
+    endpoint = 'Client'
+    response_key = 'clients'
+    model_class = models.Client
+    params = {
+        'includeactive': True,
+    }
+
+    def _assign_field_data(self, instance, json_data):
+
+        instance.id = json_data.get('id')
+        instance.name = json_data.get('name')
+        instance.inactive = json_data.get('inactive')
+
+
+class AgentSynchronizer(Synchronizer):
+    endpoint = 'Agent'
+    response_key = None
+    model_class = models.Agent
+    params = {
+        'includeactive': True,
+    }
+
+    def _unpack_records(self, response):
+        records = response.json()
+        return records
+
+    def _assign_field_data(self, instance, json_data):
+
+        instance.id = json_data.get('id')
+        instance.name = json_data.get('name')
+        instance.is_disabled = json_data.get('isdisabled')
+        instance.email = json_data.get('email')
+        instance.initials = json_data.get('initials')
+        instance.firstname = json_data.get('firstname')
+        instance.surname = json_data.get('surname')
         instance.colour = json_data.get('colour')

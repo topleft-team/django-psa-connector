@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
-from djpsa.sync.sync import TicketSynchronizer, StatusSynchronizer
+from djpsa.sync.sync import TicketSynchronizer, StatusSynchronizer, \
+    PrioritySynchronizer, ClientSynchronizer, AgentSynchronizer
 
 OPTION_NAME = 'sync_object'
 
@@ -23,5 +24,8 @@ class Command(BaseCommand):
         full_option = options.get('full', False)
 
         StatusSynchronizer().sync()
+        PrioritySynchronizer().sync()
+        ClientSynchronizer().sync()
+        AgentSynchronizer().sync()
         TicketSynchronizer().sync()
 

@@ -55,10 +55,16 @@ class Priority(models.Model):
     is_hidden = models.BooleanField(default=False)
     colour = models.CharField(max_length=255, blank=True, null=True)
 
+    def __str__(self):
+        return self.name
+
 
 class Status(models.Model):
     name = models.CharField(max_length=255)
     colour = models.CharField(max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
 
 
 class Agent(models.Model):
@@ -70,10 +76,16 @@ class Agent(models.Model):
     surname = models.CharField(max_length=255, blank=True, null=True)
     colour = models.CharField(max_length=255, blank=True, null=True)
 
+    def __str__(self):
+        return f"{self.firstname} {self.surname}"
+
 
 class Client(models.Model):
     inactive = models.BooleanField(default=False)
     name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
 
 
 class Ticket(models.Model):
@@ -89,3 +101,6 @@ class Ticket(models.Model):
     last_update = models.DateTimeField(blank=True, null=True)
     target_date = models.DateField(blank=True, null=True)
     target_time = models.TimeField(blank=True, null=True)
+
+    def __str__(self):
+        return f"Ticket {self.id} - {self.summary}"
