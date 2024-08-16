@@ -1,59 +1,14 @@
 from django.db import models
 
-# Ticket
-    # id
-    # summary
-    # details
-    # status_id
-    # priority_id
-    # client_id (company)
-    # client_name
-    # user_id (contact)
-    # user_name
-    # agent_id (member/resource)
-    # estimate
-    # estimatedays
-    # lastactiondate
-    # last_update
-    # starttime
-    # targetdate
-    # targettime
-
-
-# priority
-    # id (weird alphanumeric)
-    # priorityid (actual ID)
-    # name
-    # ishidden
-    # colour
-
-
-# Status
-    # id
-    # name
-    # colour
-
-
-# Agent
-    # id
-    # name
-    # isdisabled
-    # email
-    # initials
-    # firstname
-    # surname
-    # colour
-
-# Client (company)
-    # id
-    # inactive
-    # name
 
 class Priority(models.Model):
     # priorityid is actual ID for sync
     name = models.CharField(max_length=255, blank=True, null=True)
     is_hidden = models.BooleanField(default=False)
     colour = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        verbose_name_plural = "Priorities"
 
     def __str__(self):
         return self.name
@@ -62,6 +17,9 @@ class Priority(models.Model):
 class Status(models.Model):
     name = models.CharField(max_length=255)
     colour = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        verbose_name_plural = "Statuses"
 
     def __str__(self):
         return self.name
@@ -76,6 +34,9 @@ class Agent(models.Model):
     surname = models.CharField(max_length=255, blank=True, null=True)
     colour = models.CharField(max_length=255, blank=True, null=True)
 
+    class Meta:
+        verbose_name_plural = "Agents"
+
     def __str__(self):
         return f"{self.firstname} {self.surname}"
 
@@ -83,6 +44,9 @@ class Agent(models.Model):
 class Client(models.Model):
     inactive = models.BooleanField(default=False)
     name = models.CharField(max_length=255)
+
+    class Meta:
+        verbose_name_plural = "Clients"
 
     def __str__(self):
         return self.name
@@ -101,6 +65,9 @@ class Ticket(models.Model):
     last_update = models.DateTimeField(blank=True, null=True)
     target_date = models.DateField(blank=True, null=True)
     target_time = models.TimeField(blank=True, null=True)
+
+    class Meta:
+        verbose_name_plural = "Tickets"
 
     def __str__(self):
         return f"Ticket {self.id} - {self.summary}"
