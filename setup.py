@@ -27,6 +27,7 @@ setup(
         'django',
         'setuptools',
         'python-dateutil',
+        'retrying',
     ],
     test_suite='runtests.suite',
     tests_require=[

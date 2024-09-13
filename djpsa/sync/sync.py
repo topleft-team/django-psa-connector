@@ -2,18 +2,21 @@ import logging
 
 from django.utils import timezone
 from django.db import transaction, IntegrityError
-from django.core.exceptions import ObjectDoesNotExist
-from dateutil.parser import parse
+from django.conf import settings
 
-from djpsa.api.client import APIClient
 from djpsa.sync.models import SyncJob
-from djpsa.halo import models
+
 
 logger = logging.getLogger(__name__)
 
 CREATED = 1
 UPDATED = 2
 SKIPPED = 3
+
+
+def get_synchronizer(model_class, **kwargs):
+    sync_class = settings.PSA_MODULE.sync_factory(model_class)
+    return sync_class(**kwargs)
 
 
 def log_sync_job(f):
@@ -75,12 +78,37 @@ class SyncResults:
 class Synchronizer:
     lookup_key = 'id'
     model_class = None
+    client_class = None
+    last_updated_field = None
+    conditions = []
 
-    def __init__(self, full=False):
+    def __init__(self, full=False, *args, **kwargs):
+        request_settings = settings.PSA_MODULE.get_request_settings()
+
+        self.api_conditions = [condition for condition in self.conditions]
+        self.client = self.client_class(self.api_conditions)
+        self.partial_sync_support = True
+        self.batch_size = request_settings['batch_size']
         self.full = full
+
+    def get_sync_job_qset(self):
+        return SyncJob.objects.filter(
+            entity_name=self.model_class.__bases__[0].__name__
+        )
 
     @log_sync_job
     def sync(self):
+
+        sync_job_qset = self.get_sync_job_qset().filter(success=True)
+
+        if sync_job_qset.count() > 1 and self.last_updated_field \
+                and not self.full and self.partial_sync_support:
+            last_sync_job_time = sync_job_qset.last().start_time.strftime(
+                '%Y-%m-%dT%H:%M:%S.%fZ')
+            self.api_conditions.append({
+                self.last_updated_field: last_sync_job_time
+            })
+
         results = SyncResults()
         results = self.fetch_records(results)
 
@@ -110,21 +138,23 @@ class Synchronizer:
         self.api_conditions.
         """
 
-        client = APIClient(self.endpoint, self.params)
-
         page = 1
         while True:
             logger.info(
                 'Fetching {} records, batch {}'.format(
                     self.model_class.__bases__[0].__name__, page)
             )
-            response = client.request(params={
-                'page_no': page,
-            })
+            response = self.client.get_page(page=page)
             records = self._unpack_records(response)
             self.persist_page(records, results)
             page += 1
-            if len(records) < 50:
+            print('page:', page)
+            print('records:', len(records))
+            print('batch_size:', self.batch_size)
+            if len(records):
+                print(records[0]['id'])
+            print("-------------------------------")
+            if len(records) < self.batch_size:
                 # This page wasn't full, so there's no more records after
                 # this page.
                 break
@@ -164,8 +194,9 @@ class Synchronizer:
         raise NotImplementedError
 
     def _unpack_records(self, response):
-        records = response.json()[self.response_key]
-        return records
+        # TODO left off here, add comment that other synchronizers
+        #  can override this method
+        return response
 
     @staticmethod
     def _assign_null_relation(instance, model_field):
@@ -284,113 +315,3 @@ class Synchronizer:
 
     def get_delete_qset(self, stale_ids):
         return self.model_class.objects.filter(pk__in=stale_ids)
-
-
-class TicketSynchronizer(Synchronizer):
-    endpoint = 'Tickets'
-    response_key = endpoint.lower()
-    model_class = models.Ticket
-
-    params = {
-        'open_only': True,
-    }
-
-    related_meta = {
-        'client_id': (models.Client, 'client'),
-        'status_id': (models.Status, 'status'),
-        'priority_id': (models.Priority, 'priority'),
-        'agent_id': (models.Agent, 'agent'),
-    }
-
-    def _assign_field_data(self, instance, json_data):
-        # summary
-        # details
-        # last_action_date
-        # last_update
-        # target_date
-        # target_time
-
-        instance.id = json_data.get('id')
-        instance.summary = json_data.get('summary')
-        instance.details = json_data.get('details')
-        instance.last_action_date = parse(json_data.get('lastactiondate'))
-        instance.last_update = parse(json_data.get('last_update'))
-        instance.target_date = parse(json_data.get('targetdate'))
-        instance.target_time = parse(json_data.get('targettime'))
-
-        self.set_relations(instance, json_data)
-
-
-class StatusSynchronizer(Synchronizer):
-    endpoint = 'Status'
-    response_key = None
-    model_class = models.Status
-    params = {}
-
-    def _unpack_records(self, response):
-        records = response.json()
-        return records
-
-    def _assign_field_data(self, instance, json_data):
-
-        instance.id = json_data.get('id')
-        instance.name = json_data.get('name')
-        instance.colour = json_data.get('colour')
-
-
-class PrioritySynchronizer(Synchronizer):
-    endpoint = 'Priority'
-    response_key = None
-    model_class = models.Priority
-    params = {}
-    lookup_key = 'priorityid'
-
-    def _unpack_records(self, response):
-        records = response.json()
-        return records
-
-    def _assign_field_data(self, instance, json_data):
-
-        instance.id = json_data.get('priorityid')
-        instance.name = json_data.get('name')
-        instance.colour = json_data.get('colour')
-        instance.is_hidden = json_data.get('ishidden')
-
-
-class ClientSynchronizer(Synchronizer):
-    endpoint = 'Client'
-    response_key = 'clients'
-    model_class = models.Client
-    params = {
-        'includeactive': True,
-    }
-
-    def _assign_field_data(self, instance, json_data):
-
-        instance.id = json_data.get('id')
-        instance.name = json_data.get('name')
-        instance.inactive = json_data.get('inactive')
-
-
-class AgentSynchronizer(Synchronizer):
-    endpoint = 'Agent'
-    response_key = None
-    model_class = models.Agent
-    params = {
-        'includeactive': True,
-    }
-
-    def _unpack_records(self, response):
-        records = response.json()
-        return records
-
-    def _assign_field_data(self, instance, json_data):
-
-        instance.id = json_data.get('id')
-        instance.name = json_data.get('name')
-        instance.is_disabled = json_data.get('isdisabled')
-        instance.email = json_data.get('email')
-        instance.initials = json_data.get('initials')
-        instance.firstname = json_data.get('firstname')
-        instance.surname = json_data.get('surname')
-        instance.colour = json_data.get('colour')

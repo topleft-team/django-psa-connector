@@ -52,6 +52,59 @@ class Client(models.Model):
         return self.name
 
 
+class SLA(models.Model):
+
+    name = models.CharField(max_length=255)
+    hours_are_techs_local_time = models.BooleanField(default=False)
+    response_reset = models.BooleanField(default=False)
+    response_reset_approval = models.BooleanField(default=False)
+    track_sla_fix_by_time = models.BooleanField(default=False)
+    track_sla_response_time = models.BooleanField(default=False)
+    workday_id = models.IntegerField(blank=True, null=True)
+    auto_release_limit = models.IntegerField(blank=True, null=True)
+    auto_release_option = models.BooleanField(default=False)
+    status_after_first_warning = models.IntegerField(blank=True, null=True)
+    status_after_second_warning = models.IntegerField(blank=True, null=True)
+    status_after_auto_release = models.IntegerField(blank=True, null=True)
+
+
+class Site(models.Model):
+
+    name = models.CharField(max_length=255)
+    client = models.ForeignKey(Client, blank=True, null=True, on_delete=models.CASCADE)
+    colour = models.CharField(max_length=50, null=True, blank=True)
+    active = models.BooleanField(default=True)
+    phone_number = models.CharField(blank=True, null=True, max_length=250)
+    sla = models.ForeignKey(SLA, blank=True, null=True, on_delete=models.CASCADE)
+    use = models.CharField(max_length=255)
+    delivery_address = models.CharField(max_length=1000)
+
+
+class HaloUser(models.Model):
+
+    name = models.CharField(max_length=255)
+    first_name = models.CharField(max_length=255)
+    initials = models.CharField(max_length=10)
+    surname = models.CharField(max_length=255)
+    email = models.EmailField(null=True, blank=True, max_length=250)
+    colour = models.CharField(max_length=50, null=True, blank=True)
+    active = models.BooleanField(default=True)
+    login = models.CharField(max_length=255)
+    use = models.CharField(max_length=255)
+    client = models.ForeignKey(Client, blank=True, null=True, on_delete=models.CASCADE)
+    agent = models.ForeignKey(Agent, blank=True, null=True, on_delete=models.CASCADE)
+    site = models.ForeignKey(Site, blank=True, null=True, on_delete=models.CASCADE)
+    never_send_emails = models.BooleanField(default=False)
+    phone_number = models.CharField(blank=True, null=True, max_length=250)
+    mobile_number = models.CharField(blank=True, null=True, max_length=250)
+    mobile_number_2 = models.CharField(blank=True, null=True, max_length=250)
+    home_number = models.CharField(blank=True, null=True, max_length=250)
+    tel_pref = models.IntegerField(blank=True, null=True)
+    is_service_account = models.BooleanField(default=False)
+    is_important_contact = models.BooleanField(default=False)
+    is_important_contact_2 = models.BooleanField(default=False)
+
+
 class Ticket(models.Model):
     summary = models.CharField(blank=True, null=True, max_length=255)
     details = models.TextField(
@@ -61,6 +114,7 @@ class Ticket(models.Model):
     priority = models.ForeignKey(Priority, blank=True, null=True, on_delete=models.CASCADE)
     client = models.ForeignKey(Client, blank=True, null=True, on_delete=models.CASCADE)
     agent = models.ForeignKey(Agent, blank=True, null=True, on_delete=models.CASCADE)
+    sla = models.ForeignKey(SLA, blank=True, null=True, on_delete=models.CASCADE)
     last_action_date = models.DateField(blank=True, null=True)
     last_update = models.DateTimeField(blank=True, null=True)
     target_date = models.DateField(blank=True, null=True)
