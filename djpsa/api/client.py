@@ -1,100 +1,144 @@
-import os
 import requests
-import stat
+import logging
 
 from django.conf import settings
+from retrying import retry
+from json import JSONDecodeError
 
-TOKEN_FILE = os.path.expanduser('~/.halo_token')
+from djpsa.api import exceptions as exc
 
 
-class APIClient(object):
+RETRY_WAIT_EXPONENTIAL_MULTAPPLIER = 1000  # Initial number of milliseconds to
+# wait before retrying a request.
+RETRY_WAIT_EXPONENTIAL_MAX = 10000  # Maximum number of milliseconds to wait
+# before retrying a request.
 
-    def __init__(self, url, params=None):
-        self.url = get_resource_url(url)
-        self.params = params
+logger = logging.getLogger(__name__)
 
-    def request(self, method='GET', params=None, json=None):
+
+def retry_if_api_error(exception):
+    """
+    Return True if we should retry, False otherwise.
+
+    Basically, don't retry on APIClientError, because those are the
+    type of exceptions where retrying won't help (404s, 403s, etc.)
+    """
+    return type(exception) is exc.APIError
+
+
+class APIClient:
+
+    def __init__(self, conditions=None):
+        self.conditions = conditions
+
+        self.request_settings = settings.PSA_MODULE.get_request_settings()
+        self.timeout = self.request_settings['timeout']
+
+    def fetch_resource(self, endpoint_url, params=None, should_page=False,
+                       retry_counter=None,
+                       *args, **kwargs):
         """
-        Make a GET request to the Halo API with a token, and if the token is
-        invalid then retry once with a fresh token.
-        :param method: the HTTP method to use
-        :param params: the query parameters to use (dictionary)
+        Issue a GET request to the specified REST endpoint.
+
+        retry_counter is a dict in the form {'count': 0} that is passed in
+        to verify the number of attempts that were made.
         """
-        if not params:
-            params = self.params
-        else:
-            params.update(self.params)
 
-        params['page_size'] = 50
-        params['pageinate'] = True
+        @retry(stop_max_attempt_number=self.request_settings['max_attempts'],
+               wait_exponential_multiplier=RETRY_WAIT_EXPONENTIAL_MULTAPPLIER,
+               wait_exponential_max=RETRY_WAIT_EXPONENTIAL_MAX,
+               retry_on_exception=retry_if_api_error)
+        def _fetch_resource(endpoint_url, params=None, should_page=False,
+                            retry_counter=None, *args, **kwargs):
+            if not retry_counter:
+                retry_counter = {'count': 0}
+            retry_counter['count'] += 1
 
-        token_removed = False
-        while True:
-            token = get_token()
-            response = requests.request(
+            return self.request('GET',
+                                endpoint_url,
+                                params=params,
+                                should_page=should_page,
+                                *args,
+                                **kwargs)
+
+        if not retry_counter:
+            retry_counter = {'count': 0}
+        return _fetch_resource(endpoint_url, params=params,
+                               should_page=should_page,
+                               retry_counter=retry_counter,
+                               *args, **kwargs)
+
+    def request(self,
                 method,
-                self.url,
-                headers={
-                    'Authorization': 'Bearer {}'.format(token),
-                },
-                params=params,
-                json=json,
+                endpoint_url=None,
+                body=None,
+                params=None,
+                should_page=False,
+                files=None,
+                *args,
+                **kwargs):
+        """
+        Issue the given type of request to the specified REST endpoint.
+        """
+
+        if not endpoint_url:
+            endpoint_url = self._format_endpoint()
+
+        params = self._format_params(params)
+
+        logger.debug(
+            'Making {} request to {}, body len {}, params {}'.format(
+                method, endpoint_url, len(body) if body else 0, params
             )
-            if response.status_code == 401 and not token_removed:
-                # Token is invalid and we didn't already try to refresh it,
-                # so remove it and try again with a new token.
-                rm_token()
-                token_removed = True
-                continue
-            break
+        )
 
-        return response
+        try:
+            response = self._request(method, endpoint_url, body, params=params)
 
+        except requests.RequestException as e:
+            logger.debug(
+                'Request failed: {} {}: {}'.format(method, endpoint_url, e)
+            )
+            raise exc.APIError('{}'.format(e))
 
-def get_resource_url(resource):
-    return '{}api/{}'.format(settings.HALO_API, resource)
+        if response.status_code == 204:  # No content
+            return None
+        elif 200 <= response.status_code < 300:
+            try:
+                return response.json()
+            except JSONDecodeError as e:
+                logger.error(
+                    'Request failed during decoding JSON: GET {}: {}'
+                    .format(endpoint_url, e)
+                )
+                raise exc.APIError('JSONDecodeError: {}'.format(e))
+        elif response.status_code == 403:
+            # TODO permissions exception from AT returns as 500, because
+            #  it is terribly designed. Need to handle
+            self._log_failed(response)
+            raise exc.PermissionsException(
+                self._prepare_error_response(response), response.status_code)
+        elif response.status_code == 404:
+            msg = 'Resource not found: {}'.format(response.url)
+            logger.warning(msg)
+            raise exc.NotFoundError(msg)
+        elif 400 <= response.status_code < 499:
+            self._log_failed(response)
+            raise exc.APIClientError(
+                self._prepare_error_response(response))
+        elif response.status_code == 500:
+            self._log_failed(response)
+            raise exc.APIServerError(
+                self._prepare_error_response(response))
+        else:
+            self._log_failed(response)
+            raise exc.APIError(response)
 
+    def _request(self, method, endpoint_url, body, params=None):
+        raise NotImplementedError('Subclasses must implement this method.')
 
-def get_saved_token():
-    if os.path.exists(TOKEN_FILE):
-        with open(TOKEN_FILE) as f:
-            return f.read()
+    def _format_endpoint(self):
+        raise NotImplementedError('Subclasses must implement this method.')
 
-
-def save_token(token):
-    print('Saving token to {}'.format(TOKEN_FILE))
-    with open(TOKEN_FILE, 'w') as f:
-        os.chmod(TOKEN_FILE, stat.S_IRUSR | stat.S_IWUSR)
-        f.write(token)
-
-
-def rm_token():
-    if os.path.exists(TOKEN_FILE):
-        os.remove(TOKEN_FILE)
-
-
-def get_new_access_token():
-    print('Getting new access token')
-    token_url = '{}auth/token'.format(settings.HALO_API)
-    response = requests.post(
-        token_url,
-        data={
-            'grant_type': 'client_credentials',
-            'client_id': settings.HALO_CLIENT_ID,
-            'client_secret': settings.HALO_CLIENT_SECRET,
-            'scope': 'all',
-        }
-    )
-    response.raise_for_status()
-    token = response.json()['access_token']
-    return token
-
-
-def get_token():
-    token = get_saved_token()
-    if token:
-        return token
-
-    token = get_new_access_token()
-    save_token(token)
-    return token
+    def _format_params(self, params=None):
+        raise NotImplementedError('Subclasses must implement this method.')
