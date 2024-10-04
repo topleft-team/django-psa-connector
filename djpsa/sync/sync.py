@@ -15,7 +15,7 @@ SKIPPED = 3
 
 
 def get_synchronizer(model_class, **kwargs):
-    sync_class = settings.PSA_MODULE.sync_factory(model_class)
+    sync_class = settings.PROVIDER.sync_factory(model_class)
     return sync_class(**kwargs)
 
 
@@ -75,6 +75,7 @@ class SyncResults:
         self.synced_ids = set()
 
 
+# TODO bug, skipping not happening
 class Synchronizer:
     lookup_key = 'id'
     model_class = None
@@ -83,7 +84,7 @@ class Synchronizer:
     conditions = []
 
     def __init__(self, full=False, *args, **kwargs):
-        request_settings = settings.PSA_MODULE.get_request_settings()
+        request_settings = settings.PROVIDER.get_request_settings()
 
         self.api_conditions = [condition for condition in self.conditions]
         self.client = self.client_class(self.api_conditions)
@@ -148,12 +149,6 @@ class Synchronizer:
             records = self._unpack_records(response)
             self.persist_page(records, results)
             page += 1
-            print('page:', page)
-            print('records:', len(records))
-            print('batch_size:', self.batch_size)
-            if len(records):
-                print(records[0]['id'])
-            print("-------------------------------")
             if len(records) < self.batch_size:
                 # This page wasn't full, so there's no more records after
                 # this page.
@@ -261,7 +256,7 @@ class Synchronizer:
             # Tracking skipped records not implemented
             if result == CREATED:
                 instance.save()
-            elif result is None:
+            elif self._is_instance_changed(instance):
                 instance.save()
                 result = UPDATED
             else:
@@ -315,3 +310,6 @@ class Synchronizer:
 
     def get_delete_qset(self, stale_ids):
         return self.model_class.objects.filter(pk__in=stale_ids)
+
+    def _is_instance_changed(self, instance):
+        return instance.tracker.changed()

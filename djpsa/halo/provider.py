@@ -1,7 +1,13 @@
+"""
+Provides PSA-specific functions and configurations for the api and sync apps.
+If you are adding something that is provided in only ONE place, it shouldn't be here.
+For example, the PSA specific request decorator is only used in the api app,
+so it should be in api.py.
+"""
+
 from django.conf import settings
 
 from djpsa.halo import sync
-from djpsa.halo import formatter
 
 f = {s.model_class: s for s in [
     sync.TicketSynchronizer,
@@ -32,7 +38,3 @@ def get_request_settings():
         request_settings.update(settings.HALO_CONF_CALLABLE())
 
     return request_settings
-
-
-def get_request_formatter():
-    return formatter.Formatter()

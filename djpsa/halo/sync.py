@@ -1,8 +1,9 @@
-from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
 from dateutil.parser import parse
 
 from djpsa.halo import models
 from djpsa.halo import api
+
 from djpsa.sync.sync import Synchronizer
 
 
@@ -24,6 +25,15 @@ from djpsa.sync.sync import Synchronizer
 #     isn't used on the ticket model.
 
 
+def empty_date_parser(date_time):
+    # Halo API returns a date of 1/1/1900 or earlier as an empty date.
+    # This will set the model fields as None if it is an impossible date.
+    # Set to 1980 in case they also do 1950 or something and I haven't seen it.
+    if date_time:
+        date_time = timezone.make_aware(parse(date_time), timezone.utc)
+        return date_time if date_time.year > 1980 else None
+
+
 class ResponseKeyMixin:
     response_key = None
 
@@ -34,7 +44,7 @@ class ResponseKeyMixin:
 
 class TicketSynchronizer(ResponseKeyMixin, Synchronizer):
     response_key = 'tickets'
-    model_class = models.Ticket
+    model_class = models.TicketTracker
     client_class = api.TicketAPI
     last_updated_field = 'lastupdatefromdate'
 
@@ -44,6 +54,10 @@ class TicketSynchronizer(ResponseKeyMixin, Synchronizer):
         'priority_id': (models.Priority, 'priority'),
         'agent_id': (models.Agent, 'agent'),
         'sla_id': (models.SLA, 'sla'),
+        'user_id': (models.HaloUser, 'user'),
+        'site_id': (models.Site, 'site'),
+        'tickettype_id': (models.TicketType, 'type'),
+        'parent_id': (models.Ticket, 'project'),
     }
 
     def __init__(self, full=False, *args, **kwargs):
@@ -59,16 +73,79 @@ class TicketSynchronizer(ResponseKeyMixin, Synchronizer):
         instance.id = json_data.get('id')
         instance.summary = json_data.get('summary')
         instance.details = json_data.get('details')
-        instance.last_action_date = parse(json_data.get('lastactiondate'))
-        instance.last_update = parse(json_data.get('last_update'))
-        instance.target_date = parse(json_data.get('targetdate'))
-        instance.target_time = parse(json_data.get('targettime'))
+        instance.last_action_date = timezone.make_aware(
+            parse(json_data.get('lastactiondate')), timezone.utc)
+        instance.last_update = timezone.make_aware(
+            parse(json_data.get('last_update')), timezone.utc)
+        instance.user_email = json_data.get('useremail')
+        instance.reported_by = json_data.get('reportedby')
+        instance.end_user_status = json_data.get('enduserstatus')
+        instance.category_1 = json_data.get('category1')
+        instance.category_2 = json_data.get('category2')
+        instance.category_3 = json_data.get('category3')
+        instance.category_4 = json_data.get('category4')
+        instance.inactive = json_data.get('inactive', False)
+        instance.sla_response_state = json_data.get('sla_response_state')
+        instance.sla_hold_time = json_data.get('sla_hold_time')
+        instance.impact = json_data.get('impact')
+        instance.flagged = json_data.get('flagged', False)
+        instance.on_hold = json_data.get('onhold', False)
+        instance.project_time_actual = json_data.get('projecttimeactual')
+        instance.project_money_actual = json_data.get('projectmoneyactual')
+        instance.cost = json_data.get('cost')
+        instance.estimate = json_data.get('estimate')
+        instance.estimated_days = json_data.get('estimateddays')
+        instance.exclude_from_slas = json_data.get('excludefromslas', False)
+        instance.team = json_data.get('team')
+        instance.reviewed = json_data.get('reviewed', False)
+        instance.read = json_data.get('read', False)
+        instance.use = json_data.get('use')
+        instance.email_to_list = json_data.get('emailtolist')
+        instance.urgency = json_data.get('urgency')
+        instance.service_status_note = json_data.get('servicestatusnote')
+        instance.ticket_tags = json_data.get('tickettags')
+        instance.appointment_type = json_data.get('appointment_type')
+        instance.impact_level = json_data.get('impactlevel')
+
+        date_occurred = json_data.get('dateoccurred')
+        instance.date_occurred = empty_date_parser(date_occurred)
+
+        respond_by_date = json_data.get('respondbydate')
+        instance.respond_by_date = empty_date_parser(respond_by_date)
+
+        fix_by_date = json_data.get('fixbydate')
+        instance.fix_by_date = empty_date_parser(fix_by_date)
+
+        date_assigned = json_data.get('dateassigned')
+        instance.date_assigned = empty_date_parser(date_assigned)
+
+        response_date = json_data.get('responsedate')
+        instance.response_date = empty_date_parser(response_date)
+
+        deadline_date = json_data.get('deadlinedate')
+        instance.deadline_date = empty_date_parser(deadline_date)
+
+        start_date = json_data.get('startdate')
+        instance.start_date = empty_date_parser(start_date)
+
+        if instance.start_date:
+            # Don't set time if start date is empty.
+            instance.start_time = parse(json_data.get('starttime'))
+
+        target_date = json_data.get('targetdate')
+        instance.target_date = empty_date_parser(target_date)
+
+        if instance.target_date:
+            instance.target_time = parse(json_data.get('targettime'))
+
+        last_incoming_email_date = json_data.get('lastincomingemaildate')
+        instance.last_incoming_email_date = empty_date_parser(last_incoming_email_date)
 
         self.set_relations(instance, json_data)
 
 
 class StatusSynchronizer(Synchronizer):
-    model_class = models.Status
+    model_class = models.StatusTracker
     client_class = api.StatusAPI
 
     def _assign_field_data(self, instance, json_data):
@@ -79,7 +156,7 @@ class StatusSynchronizer(Synchronizer):
 
 
 class PrioritySynchronizer(Synchronizer):
-    model_class = models.Priority
+    model_class = models.PriorityTracker
     lookup_key = 'priorityid'
     client_class = api.PriorityAPI
 
@@ -93,8 +170,12 @@ class PrioritySynchronizer(Synchronizer):
 
 class ClientSynchronizer(ResponseKeyMixin, Synchronizer):
     response_key = 'clients'
-    model_class = models.Client
+    model_class = models.ClientTracker
     client_class = api.ClientAPI
+
+    related_meta = {
+        'main_site_id': (models.Site, 'site'),
+    }
 
     def __init__(self, full=False, *args, **kwargs):
 
@@ -109,10 +190,13 @@ class ClientSynchronizer(ResponseKeyMixin, Synchronizer):
         instance.id = json_data.get('id')
         instance.name = json_data.get('name')
         instance.inactive = json_data.get('inactive')
+        instance.phone_number = json_data.get('main_phonenumber')
+
+        self.set_relations(instance, json_data)
 
 
 class AgentSynchronizer(Synchronizer):
-    model_class = models.Agent
+    model_class = models.AgentTracker
     client_class = api.AgentAPI
 
     def __init__(self, full=False, *args, **kwargs):
@@ -136,7 +220,7 @@ class AgentSynchronizer(Synchronizer):
 
 
 class SLASynchronizer(Synchronizer):
-    model_class = models.SLA
+    model_class = models.SLATracker
     client_class = api.StatusAPI
 
     def _assign_field_data(self, instance, json_data):
@@ -157,7 +241,7 @@ class SLASynchronizer(Synchronizer):
 
 
 class SiteSynchronizer(ResponseKeyMixin, Synchronizer):
-    model_class = models.Site
+    model_class = models.SiteTracker
     response_key = 'sites'
     client_class = api.SiteAPI
 
@@ -200,7 +284,7 @@ class SiteSynchronizer(ResponseKeyMixin, Synchronizer):
 
 
 class HaloUserSynchronizer(ResponseKeyMixin, Synchronizer):
-    model_class = models.HaloUser
+    model_class = models.HaloUserTracker
     response_key = 'users'
     client_class = api.UserAPI
 
@@ -242,3 +326,51 @@ class HaloUserSynchronizer(ResponseKeyMixin, Synchronizer):
             json_data['linked_agent_id'] = None
 
         self.set_relations(instance, json_data)
+
+
+class AppointmentSynchronizer(Synchronizer):
+    model_class = models.AppointmentTracker
+    client_class = api.AppointmentAPI
+
+    related_meta = {
+        'client_id': (models.Client, 'client'),
+        'agent_id': (models.Agent, 'agent'),
+        'site_id': (models.Site, 'site'),
+        'user_id': (models.HaloUser, 'user'),
+        'ticket_id': (models.Ticket, 'ticket'),
+    }
+
+    def __init__(self, full=False, *args, **kwargs):
+
+        self.conditions.append({
+            'hidecompleted': True,
+        })
+
+        super().__init__(full, *args, **kwargs)
+
+    def _assign_field_data(self, instance, json_data):
+        instance.id = json_data.get('id')
+        instance.subject = json_data.get('subject')
+        instance.start_date = timezone.make_aware(parse(json_data.get('start_date')), timezone.utc)
+        instance.end_date = timezone.make_aware(parse(json_data.get('end_date')), timezone.utc)
+        instance.appointment_type = json_data.get('appointment_type_name')
+        instance.is_private = json_data.get('is_private')
+        instance.is_task = json_data.get('is_task', False)
+        instance.complete_status = json_data.get('complete_status')
+        instance.colour = json_data.get('colour')
+        instance.online_meeting_url = json_data.get('online_meeting_url')
+
+        self.set_relations(instance, json_data)
+
+
+class TicketTypeSyncronizer(Synchronizer):
+    model_class = models.TicketTypeTracker
+    client_class = api.TicketTypeAPI
+
+    def _assign_field_data(self, instance, json_data):
+        instance.id = json_data.get('id')
+        instance.name = json_data.get('name')
+        instance.description = json_data.get('description')
+        instance.active = json_data.get('active', False)
+        instance.use = json_data.get('use')
+        instance.colour = json_data.get('colour')

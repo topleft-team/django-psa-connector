@@ -1,33 +1,47 @@
-import os
+import redis
+import logging
 import requests
-import stat
+
 
 from django.conf import settings
 
+logger = logging.getLogger(__name__)
 
-TOKEN_FILE = os.path.expanduser('~/.halo_token')
+
+redis_client = redis.StrictRedis(
+        host=settings.REDIS['host'],
+        port=settings.REDIS['port'],
+        password=settings.REDIS['password'],
+    )
 
 
 def get_saved_token():
-    if os.path.exists(TOKEN_FILE):
-        with open(TOKEN_FILE) as f:
-            return f.read()
+    token = redis_client.get('halo_token')
+    if token:
+        return token.decode('utf-8')
 
 
 def save_token(token):
-    print('Saving token to {}'.format(TOKEN_FILE))
-    with open(TOKEN_FILE, 'w') as f:
-        os.chmod(TOKEN_FILE, stat.S_IRUSR | stat.S_IWUSR)
-        f.write(token)
+    logger.debug('Saving token to Redis')
+    redis_client.set('halo_token', token)
 
 
 def rm_token():
-    if os.path.exists(TOKEN_FILE):
-        os.remove(TOKEN_FILE)
+    redis_client.delete('halo_token')
+
+
+def get_token():
+    token = get_saved_token()
+    if token:
+        return token
+
+    token = get_new_access_token()
+    save_token(token)
+    return token
 
 
 def get_new_access_token():
-    print('Getting new access token')
+    logger.debug('Getting new access token')
     token_url = '{}auth/token'.format(settings.HALO_API)
     response = requests.post(
         token_url,
@@ -42,12 +56,3 @@ def get_new_access_token():
     token = response.json()['access_token']
     return token
 
-
-def get_token():
-    token = get_saved_token()
-    if token:
-        return token
-
-    token = get_new_access_token()
-    save_token(token)
-    return token

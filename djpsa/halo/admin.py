@@ -31,3 +31,33 @@ class StatusAdmin(admin.ModelAdmin):
 class PriorityAdmin(admin.ModelAdmin):
     list_display = ('id', 'name')
     search_fields = ['id', 'name']
+
+
+@admin.register(models.TicketType)
+class TicketTypeAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name')
+    search_fields = ['id', 'name']
+
+
+@admin.register(models.HaloUser)
+class HaloUserAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'email', 'active')
+    search_fields = ['id', 'name', 'email']
+
+
+@admin.register(models.Appointment)
+class AppointmentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'subject', 'start_date', 'end_date')
+    search_fields = ['id', 'subject']
+
+
+@admin.register(models.SLA)
+class SLAAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name')
+    search_fields = ['id', 'name']
+
+
+@admin.register(models.Site)
+class SiteAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name')
+    search_fields = ['id', 'name']
