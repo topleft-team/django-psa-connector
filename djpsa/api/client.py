@@ -26,12 +26,14 @@ def retry_if_api_error(exception):
     return type(exception) is exc.APIError
 
 
+# noinspection PyPackageRequirements
 class APIClient:
 
     def __init__(self, conditions=None):
-        self.conditions = conditions
+        self.conditions = conditions if conditions else {}
 
-        self.request_settings = settings.PSA_MODULE.get_request_settings()
+        # get_request_settings is defined in the provider module of each PSA
+        self.request_settings = settings.PROVIDER.get_request_settings()
         self.timeout = self.request_settings['timeout']
 
     def fetch_resource(self, endpoint_url, params=None, should_page=False,
@@ -57,7 +59,6 @@ class APIClient:
             return self.request('GET',
                                 endpoint_url,
                                 params=params,
-                                should_page=should_page,
                                 *args,
                                 **kwargs)
 
@@ -73,9 +74,7 @@ class APIClient:
                 endpoint_url=None,
                 body=None,
                 params=None,
-                should_page=False,
                 files=None,
-                *args,
                 **kwargs):
         """
         Issue the given type of request to the specified REST endpoint.
@@ -84,8 +83,6 @@ class APIClient:
         if not endpoint_url:
             endpoint_url = self._format_endpoint()
 
-        params = self._format_params(params)
-
         logger.debug(
             'Making {} request to {}, body len {}, params {}'.format(
                 method, endpoint_url, len(body) if body else 0, params
@@ -93,7 +90,23 @@ class APIClient:
         )
 
         try:
-            response = self._request(method, endpoint_url, body, params=params)
+            # PSA-specific request decorator for any additional request
+            # management, i.e. token refresh, codebase fetch, etc.
+            _ = self._get_request_decorator()
+            decorated_request = _(requests.request)
+
+            if body:
+                kwargs['json'] = body
+            if files:
+                kwargs['files'] = files
+
+            response = decorated_request(
+                method,
+                endpoint_url,
+                headers=self._get_headers(),
+                params=self._format_params(params),
+                **kwargs
+            )
 
         except requests.RequestException as e:
             logger.debug(
@@ -116,12 +129,12 @@ class APIClient:
             # TODO permissions exception from AT returns as 500, because
             #  it is terribly designed. Need to handle
             self._log_failed(response)
-            raise exc.PermissionsException(
+            raise exc.SecurityPermissionsException(
                 self._prepare_error_response(response), response.status_code)
         elif response.status_code == 404:
             msg = 'Resource not found: {}'.format(response.url)
             logger.warning(msg)
-            raise exc.NotFoundError(msg)
+            raise exc.RecordNotFoundError(msg)
         elif 400 <= response.status_code < 499:
             self._log_failed(response)
             raise exc.APIClientError(
@@ -134,6 +147,21 @@ class APIClient:
             self._log_failed(response)
             raise exc.APIError(response)
 
+    def _log_failed(self, response):
+        # TODO will need to be redefined in PSA subclasses
+        logger.error(f'Failed request: HTTP {response.status_code} '
+                     f'for {response.url}; response {response.content}')
+
+    def _prepare_error_response(self, response):
+        # TODO will need to be redefined in PSA subclasses
+        return f'Error: {response.status_code}: {response.content}'
+
+    def _get_request_kwargs(self):
+        raise NotImplementedError('Subclasses must implement this method.')
+
+    def _get_request_decorator(self):
+        raise NotImplementedError('Subclasses must implement this method.')
+
     def _request(self, method, endpoint_url, body, params=None):
         raise NotImplementedError('Subclasses must implement this method.')
 
@@ -142,3 +170,6 @@ class APIClient:
 
     def _format_params(self, params=None):
         raise NotImplementedError('Subclasses must implement this method.')
+
+    def _get_headers(self):
+        return {}

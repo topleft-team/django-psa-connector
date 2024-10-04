@@ -28,6 +28,7 @@ setup(
         'setuptools',
         'python-dateutil',
         'retrying',
+        'redis',
     ],
     test_suite='runtests.suite',
     tests_require=[

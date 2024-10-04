@@ -23,7 +23,9 @@ class Command(BaseCommand):
             ('site', (sync.SiteSynchronizer, _('Site'))),
             ('user', (sync.HaloUserSynchronizer, _('User'))),
             ('agent', (sync.AgentSynchronizer, _('Agent'))),
+            ('ticket_type', (sync.TicketTypeSyncronizer, _('TicketType'))),
             ('ticket', (sync.TicketSynchronizer, _('Ticket'))),
+            ('appointment', (sync.AppointmentSynchronizer, _('Appointment'))),
         ])
 
     def add_arguments(self, parser):
