@@ -90,17 +90,12 @@ class APIClient:
         )
 
         try:
-            # PSA-specific request decorator for any additional request
-            # management, i.e. token refresh, codebase fetch, etc.
-            _ = self._get_request_decorator()
-            decorated_request = _(requests.request)
-
             if body:
                 kwargs['json'] = body
             if files:
                 kwargs['files'] = files
 
-            response = decorated_request(
+            response = self._request(
                 method,
                 endpoint_url,
                 headers=self._get_headers(),
@@ -162,7 +157,12 @@ class APIClient:
     def _get_request_decorator(self):
         raise NotImplementedError('Subclasses must implement this method.')
 
-    def _request(self, method, endpoint_url, body, params=None):
+    def _request(self,
+                 method,
+                 endpoint_url,
+                 headers=None,
+                 params=None,
+                 **kwargs):
         raise NotImplementedError('Subclasses must implement this method.')
 
     def _format_endpoint(self):
