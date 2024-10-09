@@ -3,7 +3,7 @@ from collections import OrderedDict
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.translation import gettext_lazy as _
 
-from djpsa.halo import sync
+from djpsa.halo.records import sync
 from djpsa.api import exceptions as exc
 
 OPTION_NAME = 'sync_object'
@@ -23,7 +23,7 @@ class Command(BaseCommand):
             ('site', (sync.SiteSynchronizer, _('Site'))),
             ('user', (sync.HaloUserSynchronizer, _('User'))),
             ('agent', (sync.AgentSynchronizer, _('Agent'))),
-            ('ticket_type', (sync.TicketTypeSyncronizer, _('TicketType'))),
+            ('ticket_type', (sync.TicketTypeSynchronizer, _('TicketType'))),
             ('ticket', (sync.TicketSynchronizer, _('Ticket'))),
             ('appointment', (sync.AppointmentSynchronizer, _('Appointment'))),
         ])

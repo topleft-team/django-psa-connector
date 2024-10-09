@@ -25,7 +25,7 @@ def log_sync_job(f):
         created_count = updated_count = deleted_count = skipped_count = 0
         sync_job = SyncJob()
         sync_job.start_time = timezone.now()
-        sync_job.entity_name = sync_instance.model_class.__bases__[0].__name__
+        sync_job.entity_name = sync_instance.get_model_name()
         sync_job.synchronizer_class = \
             sync_instance.__class__.__name__
 
@@ -75,7 +75,6 @@ class SyncResults:
         self.synced_ids = set()
 
 
-# TODO bug, skipping not happening
 class Synchronizer:
     lookup_key = 'id'
     model_class = None
@@ -94,18 +93,25 @@ class Synchronizer:
 
     def get_sync_job_qset(self):
         return SyncJob.objects.filter(
-            entity_name=self.model_class.__bases__[0].__name__
+            entity_name=self.get_model_name()
         )
+
+    def get_model_name(self):
+        return self.model_class.__bases__[0].__name__
+
+    def _get_last_sync_job_time(self, sync_job_qset):
+        if sync_job_qset.count() > 1 and self.last_updated_field \
+                and not self.full and self.partial_sync_support:
+            return sync_job_qset.last().start_time.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+        return None
 
     @log_sync_job
     def sync(self):
 
         sync_job_qset = self.get_sync_job_qset().filter(success=True)
 
-        if sync_job_qset.count() > 1 and self.last_updated_field \
-                and not self.full and self.partial_sync_support:
-            last_sync_job_time = sync_job_qset.last().start_time.strftime(
-                '%Y-%m-%dT%H:%M:%S.%fZ')
+        last_sync_job_time = self._get_last_sync_job_time(sync_job_qset)
+        if last_sync_job_time:
             self.api_conditions.append({
                 self.last_updated_field: last_sync_job_time
             })
@@ -143,7 +149,7 @@ class Synchronizer:
         while True:
             logger.info(
                 'Fetching {} records, batch {}'.format(
-                    self.model_class.__bases__[0].__name__, page)
+                    self.get_model_name(), page)
             )
             response = self.client.get_page(page=page)
             records = self._unpack_records(response)
@@ -189,8 +195,9 @@ class Synchronizer:
         raise NotImplementedError
 
     def _unpack_records(self, response):
-        # TODO left off here, add comment that other synchronizers
-        #  can override this method
+        # Override this method to unpack the records from the response, as
+        # the structure of the response varies between different PSAs and
+        # even between different endpoints in the same PSA.
         return response
 
     @staticmethod
@@ -281,7 +288,7 @@ class Synchronizer:
 
         logger.info('{}: {} {}'.format(
             result_log,
-            self.model_class.__bases__[0].__name__,
+            self.get_model_name(),
             instance
         ))
 
@@ -298,10 +305,9 @@ class Synchronizer:
             delete_qset = self.get_delete_qset(stale_ids)
             deleted_count = delete_qset.count()
 
-            pre_delete_result = None
             logger.info(
                 'Removing {} stale records for model: {}'.format(
-                    len(stale_ids), self.model_class.__bases__[0].__name__,
+                    len(stale_ids), self.get_model_name(),
                 )
             )
             delete_qset.delete()
