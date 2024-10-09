@@ -61,7 +61,7 @@ class HaloAPIClient(APIClient):
         response = requests.request(
             method,
             endpoint_url,
-            headers=self._get_headers(),
+            headers=headers,
             params=params,
             **kwargs
         )
@@ -80,47 +80,3 @@ class HaloAPIClient(APIClient):
             )
 
         return response
-
-
-class TicketAPI(HaloAPIClient):
-    endpoint = 'Tickets'
-
-
-class ClientAPI(HaloAPIClient):
-    endpoint = 'Client'
-
-
-class StatusAPI(HaloAPIClient):
-    endpoint = 'Status'
-
-
-class PriorityAPI(HaloAPIClient):
-    endpoint = 'Priority'
-
-
-class AgentAPI(HaloAPIClient):
-    endpoint = 'Agent'
-
-
-class SLAAPI(HaloAPIClient):
-    endpoint = 'SLA'
-
-
-class SiteAPI(HaloAPIClient):
-    endpoint = 'Site'
-
-
-class UserAPI(HaloAPIClient):
-    endpoint = 'Users'
-
-
-class AppointmentAPI(HaloAPIClient):
-    endpoint = 'Appointment'
-
-
-class ProjectAPI(HaloAPIClient):
-    endpoint = 'Projects'
-
-
-class TicketTypeAPI(HaloAPIClient):
-    endpoint = 'TicketType'

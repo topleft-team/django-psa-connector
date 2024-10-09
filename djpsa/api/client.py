@@ -26,7 +26,6 @@ def retry_if_api_error(exception):
     return type(exception) is exc.APIError
 
 
-# noinspection PyPackageRequirements
 class APIClient:
 
     def __init__(self, conditions=None):

@@ -10,6 +10,12 @@ settings.configure(
         'djpsa.sync',
         'djpsa.halo',
     ),
+    REDIS={
+        'host': '',
+        'port': '',
+        'password': '',
+        'db': '',
+    },
 )
 
 
