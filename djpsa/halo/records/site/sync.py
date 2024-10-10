@@ -34,10 +34,14 @@ class SiteSynchronizer(ResponseKeyMixin, Synchronizer):
 
         # This is the worst thing I have ever seen.
         instance.delivery_address = json_data.get('delivery_address_line1')
-        instance.delivery_address += " {}".format(json_data.get('delivery_address_line2'))
-        instance.delivery_address += " {}".format(json_data.get('delivery_address_line3'))
-        instance.delivery_address += " {}".format(json_data.get('delivery_address_line4'))
-        instance.delivery_address += " {}".format(json_data.get('delivery_address_line5'))
+        instance.delivery_address += \
+            " {}".format(json_data.get('delivery_address_line2'))
+        instance.delivery_address += \
+            " {}".format(json_data.get('delivery_address_line3'))
+        instance.delivery_address += \
+            " {}".format(json_data.get('delivery_address_line4'))
+        instance.delivery_address += \
+            " {}".format(json_data.get('delivery_address_line5'))
 
         instance.colour = json_data.get('colour')
         instance.active = json_data.get('active', False)

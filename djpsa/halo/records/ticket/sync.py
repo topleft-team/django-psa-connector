@@ -95,16 +95,25 @@ class TicketSynchronizer(ResponseKeyMixin, Synchronizer):
 
         if instance.start_date:
             # Don't set time if start date is empty.
-            instance.start_time = parse(json_data.get('starttime'))
+            instance.start_date = instance.start_date.replace(
+                hour=parse(json_data.get('starttime')).hour,
+                minute=parse(json_data.get('starttime')).minute,
+                second=parse(json_data.get('starttime')).second
+            )
 
         target_date = json_data.get('targetdate')
         instance.target_date = empty_date_parser(target_date)
 
         if instance.target_date:
-            instance.target_time = parse(json_data.get('targettime'))
+            # Don't set time if target date is empty.
+            instance.target_date = instance.target_date.replace(
+                hour=parse(json_data.get('targettime')).hour,
+                minute=parse(json_data.get('targettime')).minute,
+                second=parse(json_data.get('targettime')).second
+            )
 
         last_incoming_email_date = json_data.get('lastincomingemaildate')
-        instance.last_incoming_email_date = empty_date_parser(last_incoming_email_date)
+        instance.last_incoming_email_date = \
+            empty_date_parser(last_incoming_email_date)
 
         self.set_relations(instance, json_data)
-

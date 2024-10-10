@@ -26,7 +26,8 @@ class TestHaloAPIClient(unittest.TestCase):
     @patch('djpsa.halo.api.requests.request')
     @patch('djpsa.halo.api.get_token')
     @patch('djpsa.halo.api.rm_token')
-    def test_request_token_refresh(self, mock_rm_token, mock_get_token, mock_request):
+    def test_request_token_refresh(
+            self, mock_rm_token, mock_get_token, mock_request):
         mock_get_token.side_effect = ['expired_token', 'new_token']
         mock_response_401 = MagicMock()
         mock_response_401.status_code = 401

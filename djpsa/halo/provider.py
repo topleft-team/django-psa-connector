@@ -1,6 +1,8 @@
 """
 Provides PSA-specific functions and configurations for the api and sync apps.
-If you are adding something that is provided in only ONE place, it shouldn't be here.
+If you are adding something that is provided in only ONE place, it shouldn't
+be here.
+
 For example, the PSA specific request decorator is only used in the api app,
 so it should be in api.py.
 """

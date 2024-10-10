@@ -1,3 +1,6 @@
+# This file is used to import all the synchronizers for the records module
+# from a single location.
+
 from djpsa.halo.records.ticket.sync import TicketSynchronizer
 from djpsa.halo.records.priority.sync import PrioritySynchronizer
 from djpsa.halo.records.status.sync import StatusSynchronizer

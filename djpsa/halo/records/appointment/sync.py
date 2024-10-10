@@ -47,4 +47,3 @@ class AppointmentSynchronizer(Synchronizer):
         instance.online_meeting_url = json_data.get('online_meeting_url')
 
         self.set_relations(instance, json_data)
-

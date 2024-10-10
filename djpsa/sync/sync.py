@@ -80,6 +80,7 @@ class Synchronizer:
     model_class = None
     client_class = None
     last_updated_field = None
+    bulk_prune = True
     conditions = []
 
     def __init__(self, full=False, *args, **kwargs):
@@ -102,12 +103,12 @@ class Synchronizer:
     def _get_last_sync_job_time(self, sync_job_qset):
         if sync_job_qset.count() > 1 and self.last_updated_field \
                 and not self.full and self.partial_sync_support:
-            return sync_job_qset.last().start_time.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+            return sync_job_qset.last().start_time.strftime(
+                '%Y-%m-%dT%H:%M:%S.%fZ')
         return None
 
     @log_sync_job
     def sync(self):
-
         sync_job_qset = self.get_sync_job_qset().filter(success=True)
 
         last_sync_job_time = self._get_last_sync_job_time(sync_job_qset)
@@ -181,6 +182,10 @@ class Synchronizer:
         return results
 
     def set_relations(self, instance, json_data):
+        """
+        Set the foreign key relations on the instance as
+        defined in the related_meta dictionary.
+        """
         for json_field, value in self.related_meta.items():
             model_class, field_name = value
             self._assign_relation(
@@ -192,9 +197,16 @@ class Synchronizer:
             )
 
     def _assign_field_data(self, instance, api_instance):
+        """
+        Assign the field data from the API instance to the model instance,
+        overriding this method in the subclass to handle the specific fields.
+        """
         raise NotImplementedError
 
     def _unpack_records(self, response):
+        """
+        Unpack the records from the response and return them as a list.
+        """
         # Override this method to unpack the records from the response, as
         # the structure of the response varies between different PSAs and
         # even between different endpoints in the same PSA.
@@ -298,6 +310,9 @@ class Synchronizer:
         """
         Delete records that existed when sync started but were
         not seen as we iterated through all records from REST API.
+
+        If bulk_prune is set to False, delete records one by one to
+        prevent errors.
         """
         stale_ids = initial_ids - synced_ids
         deleted_count = 0
@@ -310,7 +325,19 @@ class Synchronizer:
                     len(stale_ids), self.get_model_name(),
                 )
             )
-            delete_qset.delete()
+
+            try:
+                # If bulk_prune is set to True, delete records in bulk
+                if self.bulk_prune:
+                    delete_qset.delete()
+                else:
+                    for instance in delete_qset:
+                        instance.delete()
+            except IntegrityError as e:
+                logger.error(
+                    'IntegrityError while attempting to delete {} records. '
+                    'Error: {}'.format(self.get_model_name(), e)
+                )
 
         return deleted_count
 

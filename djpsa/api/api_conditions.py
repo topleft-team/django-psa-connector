@@ -12,21 +12,25 @@ class APICondition:
         self.value = value
 
         if self.op not in self.VALID_OPERATORS:
-            raise ValueError(f"Invalid operator: {self.op}. Must be one of {self.VALID_OPERATORS}")
+            raise ValueError(
+                f"Invalid operator: {self.op}. "
+                f"Must be one of {self.VALID_OPERATORS}")
 
         # If grouping (and/or), ensure the args are instances of APICondition
         if self.op in ("and", "or"):
             for condition in args:
                 if not isinstance(condition, self.__class__):
                     raise TypeError(
-                        f"Grouped conditions must also be instances of {self.__class__.__name__}"
+                        f"Grouped conditions must also "
+                        f"be instances of {self.__class__.__name__}"
                     )
                 self._items.append(condition)
 
     def __repr__(self):
         if len(self._items):
             return f"GroupedCondition(op={self.op}, conditions={self._items})"
-        return f"Condition(op={self.op}, field={self.field}, value={self.value})"
+        return \
+            f"Condition(op={self.op}, field={self.field}, value={self.value})"
 
     def format_condition(self):
         """Formats condition using the class-level formatter"""

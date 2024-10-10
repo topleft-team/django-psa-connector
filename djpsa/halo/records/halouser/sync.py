@@ -4,7 +4,6 @@ from djpsa.halo.sync import ResponseKeyMixin
 from djpsa.sync.sync import Synchronizer
 
 
-# TODO add avatar download, it must exist
 class HaloUserSynchronizer(ResponseKeyMixin, Synchronizer):
     model_class = models.HaloUserTracker
     response_key = 'users'
@@ -41,8 +40,10 @@ class HaloUserSynchronizer(ResponseKeyMixin, Synchronizer):
         instance.home_number = json_data.get('homenumber')
         instance.tel_pref = json_data.get('telpref')
         instance.is_service_account = json_data.get('isserviceaccount', False)
-        instance.is_important_contact = json_data.get('isimportantcontact', False)
-        instance.is_important_contact_2 = json_data.get('isimportantcontact2', False)
+        instance.is_important_contact = \
+            json_data.get('isimportantcontact', False)
+        instance.is_important_contact_2 = \
+            json_data.get('isimportantcontact2', False)
 
         if json_data.get('linked_agent_id') == 0:
             json_data['linked_agent_id'] = None

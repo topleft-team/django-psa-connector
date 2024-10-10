@@ -25,4 +25,3 @@ class AgentSynchronizer(Synchronizer):
         instance.firstname = json_data.get('firstname')
         instance.surname = json_data.get('surname')
         instance.colour = json_data.get('colour')
-
