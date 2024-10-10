@@ -326,18 +326,26 @@ class Synchronizer:
                 )
             )
 
-            try:
-                # If bulk_prune is set to True, delete records in bulk
-                if self.bulk_prune:
+            # If bulk_prune is set to True, delete records in bulk
+            if self.bulk_prune:
+                try:
                     delete_qset.delete()
-                else:
-                    for instance in delete_qset:
+                except IntegrityError as e:
+                    logger.error(
+                        'IntegrityError while attempting to delete {} '
+                        'records. Error: {}'.format(
+                            self.get_model_name(), e)
+                    )
+            else:
+                for instance in delete_qset:
+                    try:
                         instance.delete()
-            except IntegrityError as e:
-                logger.error(
-                    'IntegrityError while attempting to delete {} records. '
-                    'Error: {}'.format(self.get_model_name(), e)
-                )
+                    except IntegrityError as e:
+                        logger.error(
+                            'IntegrityError while attempting to delete {} '
+                            'records. Error: {}'.format(
+                                self.get_model_name(), e)
+                        )
 
         return deleted_count
 
