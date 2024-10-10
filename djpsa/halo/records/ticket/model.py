@@ -8,14 +8,22 @@ class Ticket(models.Model):
         blank=True, null=True, max_length=8000
     )
     status = models.ForeignKey('Status', on_delete=models.CASCADE)
-    priority = models.ForeignKey('Priority', blank=True, null=True, on_delete=models.CASCADE)
-    client = models.ForeignKey('Client', blank=True, null=True, on_delete=models.CASCADE)
-    agent = models.ForeignKey('Agent', blank=True, null=True, on_delete=models.CASCADE)
-    sla = models.ForeignKey('SLA', blank=True, null=True, on_delete=models.CASCADE)
-    user = models.ForeignKey('HaloUser', blank=True, null=True, on_delete=models.CASCADE)
-    site = models.ForeignKey('Site', blank=True, null=True, on_delete=models.CASCADE)
-    type = models.ForeignKey('TicketType', blank=True, null=True, on_delete=models.CASCADE)
-    project = models.ForeignKey('Ticket', blank=True, null=True, on_delete=models.CASCADE)
+    priority = models.ForeignKey(
+        'Priority', blank=True, null=True, on_delete=models.CASCADE)
+    client = models.ForeignKey(
+        'Client', blank=True, null=True, on_delete=models.CASCADE)
+    agent = models.ForeignKey(
+        'Agent', blank=True, null=True, on_delete=models.CASCADE)
+    sla = models.ForeignKey(
+        'SLA', blank=True, null=True, on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        'HaloUser', blank=True, null=True, on_delete=models.CASCADE)
+    site = models.ForeignKey(
+        'Site', blank=True, null=True, on_delete=models.CASCADE)
+    type = models.ForeignKey(
+        'TicketType', blank=True, null=True, on_delete=models.CASCADE)
+    project = models.ForeignKey(
+        'Ticket', blank=True, null=True, on_delete=models.CASCADE)
     user_email = models.EmailField(blank=True, null=True)
     reported_by = models.CharField(max_length=255, blank=True, null=True)
     end_user_status = models.IntegerField(blank=True, null=True)
@@ -24,7 +32,8 @@ class Ticket(models.Model):
     category_3 = models.CharField(max_length=255, blank=True, null=True)
     category_4 = models.CharField(max_length=255, blank=True, null=True)
     inactive = models.BooleanField(default=False)
-    sla_response_state = models.CharField(max_length=255, blank=True, null=True)
+    sla_response_state = \
+        models.CharField(max_length=255, blank=True, null=True)
     sla_hold_time = models.FloatField(blank=True, null=True)
     date_occurred = models.DateTimeField(blank=True, null=True)
     respond_by_date = models.DateTimeField(blank=True, null=True)
@@ -34,10 +43,12 @@ class Ticket(models.Model):
     deadline_date = models.DateTimeField(blank=True, null=True)
     last_action_date = models.DateField(blank=True, null=True)
     last_update = models.DateTimeField(blank=True, null=True)
+
+    # Target and Start date are actually 2 fields from Halo,
+    # but we are syncing both into the same field in the model.
     target_date = models.DateField(blank=True, null=True)
-    target_time = models.TimeField(blank=True, null=True)
     start_date = models.DateField(blank=True, null=True)
-    start_time = models.TimeField(blank=True, null=True)
+
     last_incoming_email = models.DateTimeField(blank=True, null=True)
     impact = models.IntegerField(blank=True, null=True)
     impact_level = models.IntegerField(blank=True, null=True)
@@ -55,7 +66,8 @@ class Ticket(models.Model):
     use = models.CharField(max_length=255, blank=True, null=True)
     email_to_list = models.TextField(max_length=2000, blank=True, null=True)
     urgency = models.IntegerField(blank=True, null=True)
-    service_status_note = models.TextField(max_length=2000, blank=True, null=True)
+    service_status_note = \
+        models.TextField(max_length=2000, blank=True, null=True)
     ticket_tags = models.TextField(max_length=2000, blank=True, null=True)
     appointment_type = models.CharField(max_length=255, blank=True, null=True)
 
@@ -72,4 +84,3 @@ class TicketTracker(Ticket):
     class Meta:
         proxy = True
         db_table = 'halo_ticket'
-

@@ -14,4 +14,3 @@ class PrioritySynchronizer(Synchronizer):
         instance.name = json_data.get('name')
         instance.colour = json_data.get('colour')
         instance.is_hidden = json_data.get('ishidden')
-

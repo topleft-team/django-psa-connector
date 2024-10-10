@@ -55,4 +55,3 @@ def get_new_access_token():
     response.raise_for_status()
     token = response.json()['access_token']
     return token
-

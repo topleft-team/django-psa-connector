@@ -19,4 +19,3 @@ class StatusTracker(Status):
     class Meta:
         proxy = True
         db_table = 'halo_status'
-

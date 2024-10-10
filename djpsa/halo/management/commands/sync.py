@@ -99,4 +99,3 @@ class Command(BaseCommand):
             msg += 'Errors:\n'
             msg += error_messages
             raise CommandError(msg)
-

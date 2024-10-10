@@ -1,3 +1,6 @@
+# This file is used to import all the models for the records module
+#  from a single location.
+
 from djpsa.halo.records.ticket.model import Ticket, TicketTracker
 from djpsa.halo.records.priority.model import Priority, PriorityTracker
 from djpsa.halo.records.status.model import Status, StatusTracker

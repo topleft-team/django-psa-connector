@@ -4,7 +4,8 @@ from django.conf import settings
 from django.utils import timezone
 from django.db import IntegrityError
 
-from djpsa.sync.sync import Synchronizer, SyncResults, CREATED, UPDATED, SKIPPED
+from djpsa.sync.sync import Synchronizer, SyncResults, CREATED, UPDATED, \
+    SKIPPED
 
 
 class TestSynchronizer(TestCase):
@@ -12,16 +13,18 @@ class TestSynchronizer(TestCase):
     def setUp(self):
         # Mock settings
         settings.PROVIDER = MagicMock()
-        settings.PROVIDER.get_request_settings.return_value = {'batch_size': 100}
+        settings.PROVIDER.get_request_settings.return_value = \
+            {'batch_size': 100}
         settings.PROVIDER.sync_factory.return_value = MagicMock()
 
         # Mock model class
         self.model_class_mock = MagicMock()
-        self.model_class_mock.objects.all.return_value.order_by.return_value.values_list.return_value = [1, 2, 3]
+        self.model_class_mock.objects.all.return_value = [1, 2, 3]
 
         # Mock client class
         self.client_class_mock = MagicMock()
-        self.client_class_mock.return_value.get_page.return_value = {'data': [{'id': 1}, {'id': 2}]}
+        self.client_class_mock.return_value.get_page.\
+            return_value = {'data': [{'id': 1}, {'id': 2}]}
 
         class MockSynchronizer(Synchronizer):
             model_class = self.model_class_mock
@@ -47,10 +50,13 @@ class TestSynchronizer(TestCase):
         self.synchronizer.partial_sync_support = True
 
         # Call the method
-        last_sync_time = self.synchronizer._get_last_sync_job_time(sync_job_qset_mock)
+        last_sync_time = \
+            self.synchronizer._get_last_sync_job_time(sync_job_qset_mock)
 
         # Assertions
-        self.assertEqual(last_sync_time, last_sync_job.start_time.strftime('%Y-%m-%dT%H:%M:%S.%fZ'))
+        self.assertEqual(last_sync_time,
+                         last_sync_job.start_time.strftime(
+                             '%Y-%m-%dT%H:%M:%S.%fZ'))
 
     @patch('djpsa.sync.sync.SyncJob')
     def test_get_last_sync_job_time_no_last_updated_field(self, _):
@@ -62,7 +68,8 @@ class TestSynchronizer(TestCase):
         self.synchronizer.partial_sync_support = True
 
         # Call the method
-        last_sync_time = self.synchronizer._get_last_sync_job_time(sync_job_qset_mock)
+        last_sync_time = \
+            self.synchronizer._get_last_sync_job_time(sync_job_qset_mock)
 
         # Assertions
         self.assertIsNone(last_sync_time)
@@ -77,7 +84,8 @@ class TestSynchronizer(TestCase):
         self.synchronizer.partial_sync_support = True
 
         # Call the method
-        last_sync_time = self.synchronizer._get_last_sync_job_time(sync_job_qset_mock)
+        last_sync_time = \
+            self.synchronizer._get_last_sync_job_time(sync_job_qset_mock)
 
         # Assertions
         self.assertIsNone(last_sync_time)
@@ -92,7 +100,8 @@ class TestSynchronizer(TestCase):
         self.synchronizer.partial_sync_support = False
 
         # Call the method
-        last_sync_time = self.synchronizer._get_last_sync_job_time(sync_job_qset_mock)
+        last_sync_time = \
+            self.synchronizer._get_last_sync_job_time(sync_job_qset_mock)
 
         # Assertions
         self.assertIsNone(last_sync_time)
@@ -100,7 +109,8 @@ class TestSynchronizer(TestCase):
     @patch.object(Synchronizer, 'persist_page')
     @patch.object(Synchronizer, '_unpack_records')
     def test_fetch_records(self, mock_unpack_records, mock_persist_page):
-        with patch.object(self.synchronizer.client_class, 'get_page') as mock_get_page:
+        with patch.object(
+                self.synchronizer.client_class, 'get_page') as mock_get_page:
             results = SyncResults()
 
             # First page response
@@ -185,7 +195,8 @@ class TestSynchronizer(TestCase):
     def test_persist_page_exception(self, mock_logger):
         records = [{'id': 1}, {'id': 2}]
         results = SyncResults()
-        self.synchronizer.update_or_create_instance = MagicMock(side_effect=IntegrityError('Test error'))
+        self.synchronizer.update_or_create_instance = \
+            MagicMock(side_effect=IntegrityError('Test error'))
 
         self.synchronizer.persist_page(records, results)
 
@@ -204,7 +215,8 @@ class TestSynchronizer(TestCase):
         mock_delete_qset.count.return_value = 2
         mock_get_delete_qset.return_value = mock_delete_qset
 
-        deleted_count = self.synchronizer.prune_stale_records(initial_ids, synced_ids)
+        deleted_count = \
+            self.synchronizer.prune_stale_records(initial_ids, synced_ids)
 
         self.assertEqual(deleted_count, 2)
         mock_get_delete_qset.assert_called_once_with({1, 4})

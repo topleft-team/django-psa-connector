@@ -46,7 +46,8 @@ class HaloAPIClient(APIClient):
 
         return params
 
-    def _request(self, method, endpoint_url, headers=None, params=None, **kwargs):
+    def _request(
+            self, method, endpoint_url, headers=None, params=None, **kwargs):
         token = get_token()
         token_header = {'Authorization': f'Bearer {token}'}
 

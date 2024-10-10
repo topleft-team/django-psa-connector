@@ -13,9 +13,12 @@ class HaloUser(models.Model):
     active = models.BooleanField(default=True)
     login = models.CharField(max_length=255, blank=True, null=True)
     use = models.CharField(max_length=255, blank=True, null=True)
-    client = models.ForeignKey('Client', blank=True, null=True, on_delete=models.CASCADE)
-    agent = models.ForeignKey('Agent', blank=True, null=True, on_delete=models.CASCADE)
-    site = models.ForeignKey('Site', blank=True, null=True, on_delete=models.CASCADE)
+    client = models.ForeignKey(
+        'Client', blank=True, null=True, on_delete=models.CASCADE)
+    agent = models.ForeignKey(
+        'Agent', blank=True, null=True, on_delete=models.CASCADE)
+    site = models.ForeignKey(
+        'Site', blank=True, null=True, on_delete=models.CASCADE)
     never_send_emails = models.BooleanField(default=False)
     phone_number = models.CharField(blank=True, null=True, max_length=250)
     mobile_number = models.CharField(blank=True, null=True, max_length=250)

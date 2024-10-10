@@ -14,12 +14,18 @@ class Appointment(models.Model):
     complete_status = models.IntegerField(blank=True, null=True)
     colour = models.CharField(max_length=50, null=True, blank=True)
     # Not using URLField because I don't trust API data.
-    online_meeting_url = models.CharField(max_length=2000, blank=True, null=True)
-    ticket = models.ForeignKey('Ticket', on_delete=models.CASCADE, blank=True, null=True)
-    site = models.ForeignKey('Site', on_delete=models.CASCADE, blank=True, null=True)
-    agent = models.ForeignKey('Agent', on_delete=models.CASCADE, blank=True, null=True)
-    user = models.ForeignKey('HaloUser', on_delete=models.CASCADE, blank=True, null=True)
-    client = models.ForeignKey('Client', on_delete=models.CASCADE, blank=True, null=True)
+    online_meeting_url = \
+        models.CharField(max_length=2000, blank=True, null=True)
+    ticket = models.ForeignKey(
+        'Ticket', on_delete=models.CASCADE, blank=True, null=True)
+    site = models.ForeignKey(
+        'Site', on_delete=models.CASCADE, blank=True, null=True)
+    agent = models.ForeignKey(
+        'Agent', on_delete=models.CASCADE, blank=True, null=True)
+    user = models.ForeignKey(
+        'HaloUser', on_delete=models.CASCADE, blank=True, null=True)
+    client = models.ForeignKey(
+        'Client', on_delete=models.CASCADE, blank=True, null=True)
 
     class Meta:
         verbose_name_plural = "Appointments"

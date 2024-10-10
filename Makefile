@@ -30,7 +30,7 @@ install: clean
 lint: ;
 
 test: clean lint
-	python setup.py test
+	python runtests.py
 
 sdist: test
 	python setup.py sdist

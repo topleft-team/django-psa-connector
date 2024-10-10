@@ -65,6 +65,7 @@ settings.configure(
     },
 )
 
+
 def _setup():
     """Configure Django stuff for tests."""
     django.setup()
@@ -104,7 +105,7 @@ def suite():
 
 if __name__ == '__main__':
     _setup()
-    # exit_on_failure(flake8_main())
+    exit_on_failure(flake8_main())
     call_command('test')
     # To run specific tests, try something such as:
     # call_command('test', 'djconnectwise.tests.test_api')  # noqa: E501
