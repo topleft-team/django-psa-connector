@@ -65,7 +65,11 @@ class SiteAdmin(admin.ModelAdmin):
 
 @admin.register(models.Action)
 class ActionAdmin(admin.ModelAdmin):
-    list_display = \
-        ('id', 'action_arrival_date', 'action_completion_date', 'time_taken', 'note')
+    list_display = (
+        'id',
+        'action_arrival_date',
+        'action_completion_date',
+        'time_taken',
+        'note')
     search_fields = \
         ['id', 'ticket__id', 'time_taken', 'project__id', 'agent__id']
