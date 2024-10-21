@@ -5,7 +5,7 @@ from model_utils import FieldTracker
 class Ticket(models.Model):
     summary = models.CharField(blank=True, null=True, max_length=255)
     details = models.TextField(
-        blank=True, null=True, max_length=8000
+        blank=True, null=True
     )
     status = models.ForeignKey('Status', on_delete=models.CASCADE)
     priority = models.ForeignKey(
@@ -63,13 +63,14 @@ class Ticket(models.Model):
     team = models.CharField(max_length=255, blank=True, null=True)
     reviewed = models.BooleanField(default=False)
     read = models.BooleanField(default=False)
-    use = models.CharField(max_length=255, blank=True, null=True)
-    email_to_list = models.TextField(max_length=2000, blank=True, null=True)
+    email_to_list = models.TextField(blank=True, null=True)
     urgency = models.IntegerField(blank=True, null=True)
     service_status_note = \
-        models.TextField(max_length=2000, blank=True, null=True)
-    ticket_tags = models.TextField(max_length=2000, blank=True, null=True)
+        models.TextField(blank=True, null=True)
+    ticket_tags = models.TextField(blank=True, null=True)
     appointment_type = models.CharField(max_length=255, blank=True, null=True)
+
+    use = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         verbose_name_plural = "Tickets"

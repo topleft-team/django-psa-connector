@@ -1,3 +1,5 @@
+from typing import Any, List
+
 from djpsa.halo.records import models
 from djpsa.halo.records import api
 from djpsa.halo.sync import ResponseKeyMixin
@@ -14,13 +16,16 @@ class HaloUserSynchronizer(ResponseKeyMixin, Synchronizer):
         'linked_agent_id': (models.Agent, 'agent'),
     }
 
-    def __init__(self, full=False, *args, **kwargs):
+    def __init__(self,
+                 full: bool = False,
+                 conditions: List = None,
+                 *args: Any,
+                 **kwargs: Any):
+        super().__init__(full, conditions, *args, **kwargs)
 
-        self.conditions.append({
+        self.client.add_condition({
             'includeactive': True,
         })
-
-        super().__init__(full, *args, **kwargs)
 
     def _assign_field_data(self, instance, json_data):
         instance.id = json_data.get('id')

@@ -11,4 +11,5 @@ from djpsa.halo.records.sla.sync import SLASynchronizer
 from djpsa.halo.records.appointment.sync import AppointmentSynchronizer
 from djpsa.halo.records.halouser.sync import HaloUserSynchronizer
 from djpsa.halo.records.tickettype.sync import TicketTypeSynchronizer
+from djpsa.halo.records.action.sync import ActionSynchronizer
 

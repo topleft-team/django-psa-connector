@@ -11,7 +11,7 @@ class Site(models.Model):
     active = models.BooleanField(default=True)
     phone_number = models.CharField(blank=True, null=True, max_length=250)
     sla = models.ForeignKey(
-        'SLA', blank=True, null=True, on_delete=models.CASCADE)
+        'SLA', blank=True, null=True, on_delete=models.SET_NULL)
     use = models.CharField(max_length=255, blank=True, null=True)
     delivery_address = models.CharField(max_length=1000, blank=True, null=True)
 

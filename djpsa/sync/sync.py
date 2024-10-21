@@ -1,11 +1,11 @@
 import logging
 
+from typing import List, Any
 from django.utils import timezone
 from django.db import transaction, IntegrityError
 from django.conf import settings
 
 from djpsa.sync.models import SyncJob
-
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +53,7 @@ def log_sync_job(f):
             sync_job.save()
 
         return created_count, updated_count, skipped_count, deleted_count
+
     return wrapper
 
 
@@ -67,6 +68,7 @@ class InvalidObjectException(Exception):
 
 class SyncResults:
     """Track results of a sync job."""
+
     def __init__(self):
         self.created_count = 0
         self.updated_count = 0
@@ -81,13 +83,16 @@ class Synchronizer:
     client_class = None
     last_updated_field = None
     bulk_prune = True
-    conditions = []
 
-    def __init__(self, full=False, *args, **kwargs):
+    def __init__(self,
+                 full: bool = False,
+                 conditions: List = None,
+                 *args: Any,
+                 **kwargs: Any):
         request_settings = settings.PROVIDER.get_request_settings()
 
-        self.api_conditions = [condition for condition in self.conditions]
-        self.client = self.client_class(self.api_conditions)
+        conditions = conditions or []
+        self.client = self.client_class(conditions)
         self.partial_sync_support = True
         self.batch_size = request_settings['batch_size']
         self.full = full
@@ -103,19 +108,18 @@ class Synchronizer:
     def _get_last_sync_job_time(self, sync_job_qset):
         if sync_job_qset.count() > 1 and self.last_updated_field \
                 and not self.full and self.partial_sync_support:
-            return sync_job_qset.last().start_time.strftime(
-                '%Y-%m-%dT%H:%M:%S.%fZ')
+            return self._format_job_condition(
+                sync_job_qset.last().start_time.strftime(
+                    '%Y-%m-%dT%H:%M:%S.%fZ'))
         return None
 
     @log_sync_job
     def sync(self):
         sync_job_qset = self.get_sync_job_qset().filter(success=True)
 
-        last_sync_job_time = self._get_last_sync_job_time(sync_job_qset)
-        if last_sync_job_time:
-            self.api_conditions.append({
-                self.last_updated_field: last_sync_job_time
-            })
+        last_sync_job_condition = self._get_last_sync_job_time(sync_job_qset)
+        if last_sync_job_condition:
+            self.client.add_condition(last_sync_job_condition)
 
         results = SyncResults()
         results = self.fetch_records(results)
@@ -133,17 +137,13 @@ class Synchronizer:
             results.skipped_count, results.deleted_count
 
     def _instance_ids(self):
-        ids = self.model_class.objects.all().order_by('id')\
+        ids = self.model_class.objects.all().order_by('id') \
             .values_list('id', flat=True)
         return set(ids)
 
-    def fetch_records(self, results, conditions=None):
+    def fetch_records(self, results, params=None):
         """
         For all pages of results, save each page of results to the DB.
-
-        If conditions is supplied in the call, then use only those conditions
-        while fetching pages of records. If it's omitted, then use
-        self.api_conditions.
         """
 
         page = 1
@@ -152,7 +152,7 @@ class Synchronizer:
                 'Fetching {} records, batch {}'.format(
                     self.get_model_name(), page)
             )
-            response = self.client.get_page(page=page)
+            response = self.client.get_page(page=page, params=params)
             records = self._unpack_records(response)
             self.persist_page(records, results)
             page += 1
@@ -201,6 +201,9 @@ class Synchronizer:
         Assign the field data from the API instance to the model instance,
         overriding this method in the subclass to handle the specific fields.
         """
+        raise NotImplementedError
+
+    def _format_job_condition(self, last_sync_time):
         raise NotImplementedError
 
     def _unpack_records(self, response):
@@ -272,7 +275,6 @@ class Synchronizer:
         try:
             self._assign_field_data(instance, api_instance)
 
-            # Tracking skipped records not implemented
             if result == CREATED:
                 instance.save()
             elif self._is_instance_changed(instance):
@@ -331,7 +333,7 @@ class Synchronizer:
                 try:
                     delete_qset.delete()
                 except IntegrityError as e:
-                    logger.error(
+                    logger.exception(
                         'IntegrityError while attempting to delete {} '
                         'records. Error: {}'.format(
                             self.get_model_name(), e)
@@ -341,7 +343,7 @@ class Synchronizer:
                     try:
                         instance.delete()
                     except IntegrityError as e:
-                        logger.error(
+                        logger.exception(
                             'IntegrityError while attempting to delete {} '
                             'records. Error: {}'.format(
                                 self.get_model_name(), e)

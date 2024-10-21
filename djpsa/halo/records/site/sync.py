@@ -1,3 +1,4 @@
+from typing import Any, List
 from djpsa.halo.records import models
 from djpsa.halo.records import api
 from djpsa.halo.sync import ResponseKeyMixin
@@ -14,13 +15,16 @@ class SiteSynchronizer(ResponseKeyMixin, Synchronizer):
         'sla_id': (models.SLA, 'sla'),
     }
 
-    def __init__(self, full=False, *args, **kwargs):
+    def __init__(self,
+                 full: bool = False,
+                 conditions: List = None,
+                 *args: Any,
+                 **kwargs: Any):
+        super().__init__(full, conditions, *args, **kwargs)
 
-        self.conditions.append({
+        self.client.add_condition({
             'includeaddress': True,
         })
-
-        super().__init__(full, *args, **kwargs)
 
     def _assign_field_data(self, instance, json_data):
 

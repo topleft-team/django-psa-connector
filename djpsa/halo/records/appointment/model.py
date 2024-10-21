@@ -19,7 +19,7 @@ class Appointment(models.Model):
     ticket = models.ForeignKey(
         'Ticket', on_delete=models.CASCADE, blank=True, null=True)
     site = models.ForeignKey(
-        'Site', on_delete=models.CASCADE, blank=True, null=True)
+        'Site', on_delete=models.SET_NULL, blank=True, null=True)
     agent = models.ForeignKey(
         'Agent', on_delete=models.CASCADE, blank=True, null=True)
     user = models.ForeignKey(

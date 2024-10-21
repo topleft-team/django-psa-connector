@@ -61,3 +61,15 @@ class SLAAdmin(admin.ModelAdmin):
 class SiteAdmin(admin.ModelAdmin):
     list_display = ('id', 'name')
     search_fields = ['id', 'name']
+
+
+@admin.register(models.Action)
+class ActionAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'action_arrival_date',
+        'action_completion_date',
+        'time_taken',
+        'note')
+    search_fields = \
+        ['id', 'ticket__id', 'time_taken', 'project__id', 'agent__id']

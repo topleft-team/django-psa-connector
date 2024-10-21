@@ -1,3 +1,5 @@
+from typing import Any, List
+
 from django.utils import timezone
 from dateutil.parser import parse
 
@@ -25,14 +27,17 @@ class TicketSynchronizer(ResponseKeyMixin, Synchronizer):
         'parent_id': (models.Ticket, 'project'),
     }
 
-    def __init__(self, full=False, *args, **kwargs):
+    def __init__(self,
+                 full: bool = False,
+                 conditions: List = None,
+                 *args: Any,
+                 **kwargs: Any):
+        super().__init__(full, conditions, *args, **kwargs)
 
         if full:
-            self.conditions.append({
+            self.client.add_condition({
                 'open_only': True,
             })
-
-        super().__init__(full, *args, **kwargs)
 
     def _assign_field_data(self, instance, json_data):
         instance.id = json_data.get('id')
