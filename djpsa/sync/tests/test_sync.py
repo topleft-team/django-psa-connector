@@ -39,24 +39,25 @@ class TestSynchronizer(TestCase):
 
     @patch('djpsa.sync.sync.SyncJob')
     def test_get_last_sync_job_time(self, _):
-        # Mock SyncJob queryset
-        sync_job_qset_mock = MagicMock()
-        sync_job_qset_mock.count.return_value = 2
-        last_sync_job = MagicMock()
-        last_sync_job.start_time = timezone.now()
-        sync_job_qset_mock.last.return_value = last_sync_job
-        self.synchronizer.last_updated_field = 'updated_at'
-        self.synchronizer.full = False
-        self.synchronizer.partial_sync_support = True
 
-        # Call the method
-        last_sync_time = \
+        with patch.object(
+                self.synchronizer,
+                '_format_job_condition') as format_job_condition_mock:
+            # Mock SyncJob queryset
+            sync_job_qset_mock = MagicMock()
+            sync_job_qset_mock.count.return_value = 2
+            last_sync_job = MagicMock()
+            last_sync_job.start_time = timezone.now()
+            sync_job_qset_mock.last.return_value = last_sync_job
+            self.synchronizer.last_updated_field = 'updated_at'
+            self.synchronizer.full = False
+            self.synchronizer.partial_sync_support = True
+
+            # Call the method
             self.synchronizer._get_last_sync_job_time(sync_job_qset_mock)
 
         # Assertions
-        self.assertEqual(last_sync_time,
-                         last_sync_job.start_time.strftime(
-                             '%Y-%m-%dT%H:%M:%S.%fZ'))
+        self.assertEqual(format_job_condition_mock.call_count, 1)
 
     @patch('djpsa.sync.sync.SyncJob')
     def test_get_last_sync_job_time_no_last_updated_field(self, _):

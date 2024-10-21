@@ -13,11 +13,11 @@ logger = logging.getLogger(__name__)
 class HaloAPIClient(APIClient):
     endpoint = None
 
-    def get_page(self, page=None):
-        params = {}
+    def get_page(self, page=None, params=None):
+        params = params or {}
         if page:
             params['page_no'] = page
-        return self.request('GET', params=params)
+        return self.fetch_resource(params=params)
 
     def get(self, record_id):
         return self.request('GET', params={'search_id': record_id})
@@ -34,17 +34,19 @@ class HaloAPIClient(APIClient):
         return '{}api/{}'.format(settings.HALO_API, self.endpoint)
 
     def _format_params(self, params=None):
-        if not params:
-            params = {}
+        params = params or {}
+        request_params = {}
 
         for condition in self.conditions:
-            params.update(condition)
+            request_params.update(condition)
 
-        if 'page' in params:
-            params['page_size'] = self.request_settings['batch_size']
-            params['pageinate'] = True
+        request_params.update(params)
 
-        return params
+        if 'page' in request_params:
+            request_params['page_size'] = self.request_settings['batch_size']
+            request_params['pageinate'] = True
+
+        return request_params
 
     def _request(
             self, method, endpoint_url, headers=None, params=None, **kwargs):

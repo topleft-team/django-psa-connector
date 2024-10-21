@@ -29,13 +29,16 @@ def retry_if_api_error(exception):
 class APIClient:
 
     def __init__(self, conditions=None):
-        self.conditions = conditions if conditions else {}
+        self.conditions = conditions if conditions else []
 
         # get_request_settings is defined in the provider module of each PSA
         self.request_settings = settings.PROVIDER.get_request_settings()
         self.timeout = self.request_settings['timeout']
 
-    def fetch_resource(self, endpoint_url, params=None, should_page=False,
+    def add_condition(self, condition):
+        self.conditions.append(condition)
+
+    def fetch_resource(self, endpoint_url=None, params=None, should_page=False,
                        retry_counter=None,
                        *args, **kwargs):
         """
@@ -49,7 +52,7 @@ class APIClient:
                wait_exponential_multiplier=RETRY_WAIT_EXPONENTIAL_MULTAPPLIER,
                wait_exponential_max=RETRY_WAIT_EXPONENTIAL_MAX,
                retry_on_exception=retry_if_api_error)
-        def _fetch_resource(endpoint_url, params=None, should_page=False,
+        def _fetch_resource(endpoint_url=None, params=None, should_page=False,
                             retry_counter=None, *args, **kwargs):
             if not retry_counter:
                 retry_counter = {'count': 0}
@@ -172,3 +175,6 @@ class APIClient:
 
     def _get_headers(self):
         return {}
+
+    def get_page(self, page=None, params=None):
+        raise NotImplementedError('Subclasses must implement this method.')

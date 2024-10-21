@@ -1,5 +1,8 @@
+import logging
+
 from django.utils import timezone
 from dateutil.parser import parse
+from djpsa.sync.sync import Synchronizer
 
 # README #
 #
@@ -18,6 +21,8 @@ from dateutil.parser import parse
 #     in the Halo API the 'id' seems to be a large alphanumeric string, and
 #     isn't used on the ticket model.
 
+logger = logging.getLogger(__name__)
+
 
 def empty_date_parser(date_time):
     # Halo API returns a date of 1/1/1900 or earlier as an empty date.
@@ -34,3 +39,45 @@ class ResponseKeyMixin:
     def _unpack_records(self, response):
         records = response[self.response_key]
         return records
+
+
+class HaloSynchronizer(Synchronizer):
+
+    def _format_job_condition(self, last_sync_time):
+        return {
+            self.last_updated_field: last_sync_time
+        }
+
+
+class HaloChildFetchRecordsMixin:
+    parent_model_class = None
+    parent_field = None
+
+    def fetch_records(self, results, params=None):
+        params = params or {}
+
+        batch = 1
+        for object_id in self.parent_object_ids:
+            logger.info(
+                'Fetching {} records, batch {}'.format(
+                    self.get_model_name(), batch)
+            )
+            params.update(self.format_parent_params(object_id))
+            response = self.client.fetch_resource(params=params)
+            records = self._unpack_records(response)
+            self.persist_page(records, results)
+            batch += 1
+
+        return results
+
+    @property
+    def parent_object_ids(self):
+        object_ids = self.parent_model_class.objects.all() \
+            .values_list('id', flat=True)
+
+        return object_ids
+
+    def format_parent_params(self, object_id):
+        return {
+            self.parent_field: object_id
+        }

@@ -9,7 +9,7 @@ class Client(models.Model):
     main_site = models.ForeignKey('Site',
                                   blank=True,
                                   null=True,
-                                  on_delete=models.CASCADE,
+                                  on_delete=models.SET_NULL,
                                   related_name='client_primary'
                                   )
     phone_number = models.CharField(blank=True, null=True, max_length=250)

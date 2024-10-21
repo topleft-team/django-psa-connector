@@ -1,3 +1,4 @@
+from typing import Any, List
 from django.utils import timezone
 from dateutil.parser import parse
 
@@ -18,13 +19,17 @@ class AppointmentSynchronizer(Synchronizer):
         'ticket_id': (models.Ticket, 'ticket'),
     }
 
-    def __init__(self, full=False, *args, **kwargs):
+    def __init__(
+            self,
+            full: bool = False,
+            conditions: List = None,
+            *args: Any,
+            **kwargs: Any):
+        super().__init__(full, conditions, *args, **kwargs)
 
-        self.conditions.append({
+        self.client.add_condition({
             'hidecompleted': True,
         })
-
-        super().__init__(full, *args, **kwargs)
 
     def _assign_field_data(self, instance, json_data):
         instance.id = json_data.get('id')
