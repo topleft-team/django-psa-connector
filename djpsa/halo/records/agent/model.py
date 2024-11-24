@@ -1,6 +1,9 @@
 from django.db import models
 from model_utils import FieldTracker
 
+UNASSIGNED_AGENT_ID = 1  # The Agent with id 1 represents the concept of being unassigned.
+# Apparently the designer of this API dropped out before the lesson on NULLs.
+
 
 class Agent(models.Model):
     name = models.CharField(max_length=255)
@@ -15,7 +18,7 @@ class Agent(models.Model):
         verbose_name_plural = "Agents"
 
     def __str__(self):
-        return f"Agent {self.id} - {self.name}"
+        return f"{self.firstname} {self.surname}"
 
 
 class AgentTracker(Agent):
