@@ -30,8 +30,9 @@ class StatusAdmin(admin.ModelAdmin):
 
 @admin.register(models.Priority)
 class PriorityAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name')
+    list_display = ('id', 'name', 'colour')
     search_fields = ['id', 'name']
+    list_filter = ('is_hidden',)
 
 
 @admin.register(models.TicketType)
