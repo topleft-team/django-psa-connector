@@ -4,17 +4,14 @@ import logging
 from django.conf import settings
 
 from djpsa.api.client import APIClient
-from djpsa.halo.utils import get_token, rm_token
+from djpsa.halo.utils import get_token
 
 
 logger = logging.getLogger(__name__)
 
 
 class HaloAPICredentials:
-    def __init__(self, resource_server, authorisation_server, client_id, client_secret):
-        self.resource_server = resource_server
-        if not self.resource_server.endswith('/'):
-            self.resource_server += '/'
+    def __init__(self, authorisation_server, client_id, client_secret):
         self.authorisation_server = authorisation_server
         if not self.authorisation_server.endswith('/'):
             self.authorisation_server += '/'
@@ -25,16 +22,19 @@ class HaloAPICredentials:
 class HaloAPIClient(APIClient):
     endpoint = None
 
-    def __init__(self, conditions=None, credentials=None):
+    def __init__(self, conditions=None, credentials=None, resource_server=None):
         super().__init__(conditions)
         if not credentials:
             credentials = HaloAPICredentials(
-                settings.HALO_RESOURCE_SERVER,
                 settings.HALO_AUTHORISATION_SERVER,
                 settings.HALO_CLIENT_ID,
                 settings.HALO_CLIENT_SECRET,
             )
         self.credentials = credentials
+
+        self.resource_server = resource_server
+        if not self.resource_server.endswith('/'):
+            self.resource_server += '/'
 
     def check_auth(self):
         return bool(get_token(self.credentials, use_cache=False))
@@ -57,7 +57,7 @@ class HaloAPIClient(APIClient):
         return self.request('PUT', params={'id': record_id}, body=data)
 
     def _format_endpoint(self):
-        return '{}{}'.format(self.credentials.resource_server, self.endpoint)
+        return '{}{}'.format(self.resource_server, self.endpoint)
 
     def _format_params(self, params=None):
         params = params or {}
