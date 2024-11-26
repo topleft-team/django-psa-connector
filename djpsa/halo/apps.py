@@ -8,5 +8,4 @@ class HaloConfig(AppConfig):
     label = 'halo'
 
     def ready(self):
-        from djpsa.halo import provider
-        settings.PROVIDER = provider
+        pass

@@ -13,14 +13,21 @@ logger = logging.getLogger(__name__)
 class HaloAPIClient(APIClient):
     endpoint = None
 
-    def __init__(self, conditions=None, resource_server_url=None,
-                 authorisation_server_url=None, client_id=None, client_secret=None
+    def __init__(self, conditions=None, resource_server=None,
+                 authorisation_server=None, client_id=None, client_secret=None
                  ):
         super().__init__(conditions)
-        self.resource_server_url = resource_server_url or settings.HALO_RESOURCE_SERVER_URL
-        self.authorisation_server_url = authorisation_server_url or settings.HALO_AUTHORISATION_SERVER_URL
+        self.resource_server = resource_server or settings.HALO_RESOURCE_SERVER
+        if not self.resource_server.endswith('/'):
+            self.resource_server += '/'
+        self.authorisation_server = authorisation_server or settings.HALO_AUTHORISATION_SERVER
+        if not self.authorisation_server.endswith('/'):
+            self.authorisation_server += '/'
         self.client_id = client_id or settings.HALO_CLIENT_ID
         self.client_secret = client_secret or settings.HALO_CLIENT_SECRET
+
+    def check_auth(self):
+
 
     def get_page(self, page=None, params=None):
         params = params or {}
@@ -40,7 +47,7 @@ class HaloAPIClient(APIClient):
         return self.request('PUT', params={'id': record_id}, body=data)
 
     def _format_endpoint(self):
-        return '{}{}'.format(self.resource_server_url, self.endpoint)
+        return '{}{}'.format(self.resource_server, self.endpoint)
 
     def _format_params(self, params=None):
         params = params or {}
@@ -60,7 +67,7 @@ class HaloAPIClient(APIClient):
     def _request(
             self, method, endpoint_url, headers=None, params=None, **kwargs):
         token = get_token(
-            self.authorisation_server_url,
+            self.authorisation_server,
             self.client_id,
             self.client_secret
         )
@@ -86,7 +93,7 @@ class HaloAPIClient(APIClient):
         if response.status_code == 401:
             rm_token()
             token = get_token(
-                self.authorisation_server_url,
+                self.authorisation_server,
                 self.client_id,
                 self.client_secret
             )
