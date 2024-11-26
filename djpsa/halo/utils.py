@@ -38,6 +38,10 @@ class LockNotAcquiredError(Exception):
 
 @contextmanager
 def redis_lock(lock_name):
+    """
+    Get a distributed lock using Redis.
+    https://redis.readthedocs.io/en/stable/connections.html#redis.asyncio.client.Redis.lock
+    """
     if getattr(settings, 'TOKEN_LOCK_DISABLED', False):
         # If the lock is not needed by a user, don't bother acquiring it
         yield True
@@ -62,9 +66,7 @@ def get_saved_token():
 
 
 def save_token(token):
-    logger.debug('Saving token to Redis')
-
-    # Save the token to the cache
+    logger.debug('Saving token to cache')
     cache.set(TOKEN_NAME, token, CACHE_EXPIRE_TIME)
 
 
