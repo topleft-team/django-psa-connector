@@ -7,7 +7,7 @@ from djpsa.halo import models
 from djpsa.halo.records import api
 from djpsa.halo.sync import ResponseKeyMixin, empty_date_parser
 from djpsa.sync.sync import Synchronizer
-from djpsa.halo.records.agent.model import UNASSIGNED_AGENT_ID
+from djpsa.halo.records.agent.api import UNASSIGNED_AGENT_ID
 
 
 class TicketSynchronizer(ResponseKeyMixin, Synchronizer):

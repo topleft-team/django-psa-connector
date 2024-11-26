@@ -1,10 +1,6 @@
 from django.db import models
 from model_utils import FieldTracker
 
-UNASSIGNED_AGENT_ID = 1  # The Agent with id 1 represents the concept of being unassigned.
-# Apparently the designer of this API dropped out before the lesson on NULLs.
-
-
 class Agent(models.Model):
     name = models.CharField(max_length=255)
     is_disabled = models.BooleanField(default=False)
