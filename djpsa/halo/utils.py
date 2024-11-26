@@ -1,17 +1,19 @@
-import time
 import redis
 import logging
 import requests
 from contextlib import contextmanager
 
 from django.conf import settings
+from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
 
-ONE_HOUR = 3600
+# One hour in seconds, minus 60 seconds for buffer
+CACHE_EXPIRE_TIME = 3540
 REQUEST_TIMEOUT = 30
 LOCK_TIMEOUT = REQUEST_TIMEOUT + 1
 BLOCK_TIMEOUT = 60
+TOKEN_NAME = 'halo_token'
 
 redis_client = None
 
@@ -36,6 +38,11 @@ class LockNotAcquiredError(Exception):
 
 @contextmanager
 def redis_lock(lock_name):
+    if getattr(settings, 'TOKEN_LOCK_DISABLED', False):
+        # If the lock is not needed by a user, don't bother acquiring it
+        yield True
+        return
+
     lock = get_redis_client().lock(
         lock_name, timeout=LOCK_TIMEOUT, blocking_timeout=BLOCK_TIMEOUT)
     acquired = lock.acquire(blocking=True)
@@ -51,35 +58,21 @@ def redis_lock(lock_name):
 
 
 def get_saved_token():
-    token_data = get_redis_client().hgetall('halo_token')
-    if not token_data:
-        return None
-
-    token = token_data.get(b'token')
-    expiry = token_data.get(b'expiry')
-
-    # Check if the token has expired
-    if expiry and float(expiry) > time.time():
-        return token.decode('utf-8')
-
-    # Token expired, remove it
-    rm_token()
-    return None
+    return cache.get(TOKEN_NAME)
 
 
 def save_token(token):
     logger.debug('Saving token to Redis')
-    # Subtract some time for buffer, say 60 seconds
-    expiry_time = time.time() + ONE_HOUR - 60
-    get_redis_client().hset('halo_token',
-                            mapping={'token': token, 'expiry': expiry_time})
 
-
-def rm_token():
-    get_redis_client().delete('halo_token')
+    # Save the token to the cache
+    cache.set(TOKEN_NAME, token, CACHE_EXPIRE_TIME)
 
 
 def get_token():
+    token = get_saved_token()
+    if token:
+        return token
+
     try:
         with redis_lock('halo_token_lock'):
             # Check if a valid token is already available, may
@@ -94,7 +87,7 @@ def get_token():
             save_token(token)
             return token
     except LockNotAcquiredError as e:
-        print(f"Could not acquire lock: {e}")
+        logger.error(f"Could not acquire lock: {e}")
 
 
 def get_new_access_token():
