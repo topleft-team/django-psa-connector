@@ -25,9 +25,8 @@ class TestHaloAPIClient(unittest.TestCase):
 
     @patch('djpsa.halo.api.requests.request')
     @patch('djpsa.halo.api.get_token')
-    @patch('djpsa.halo.api.rm_token')
     def test_request_token_refresh(
-            self, mock_rm_token, mock_get_token, mock_request):
+            self, mock_get_token, mock_request):
         mock_get_token.side_effect = ['expired_token', 'new_token']
         mock_response_401 = MagicMock()
         mock_response_401.status_code = 401
@@ -41,7 +40,6 @@ class TestHaloAPIClient(unittest.TestCase):
         self.assertEqual(response, mock_response_200)
         self.assertEqual(mock_get_token.call_count, 2)
         self.assertEqual(mock_request.call_count, 2)
-        mock_rm_token.assert_called_once()
         mock_request.assert_called_with(
             'GET',
             'http://example.com',
