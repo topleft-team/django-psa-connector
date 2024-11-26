@@ -18,15 +18,15 @@ redis_client = None
 
 def get_redis_client():
     global redis_client
-    if redis_client:
-        return redis_client
 
-    else:
+    if not redis_client:
         redis_client = redis.StrictRedis(
             host=settings.REDIS['host'],
             port=settings.REDIS['port'],
             password=settings.REDIS['password'],
         )
+
+    return redis_client
 
 
 class LockNotAcquiredError(Exception):
