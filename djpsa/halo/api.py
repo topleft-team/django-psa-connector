@@ -1,17 +1,17 @@
-import requests
 import logging
+import requests
+from contextlib import contextmanager
+from django.conf import settings
+from django.core.cache import cache
+
+from djpsa.api.client import APIClient
+from djpsa.api.exceptions import APIError
+
 try:
     # Redis is used for locking. It's optional.
     import redis
 except ImportError:
     redis = None
-import logging
-import requests
-
-
-from django.conf import settings
-
-from djpsa.api.client import APIClient
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +89,7 @@ class HaloAPIClient(APIClient):
 
     def _request(
             self, method, endpoint_url, headers=None, params=None, **kwargs):
-        token = get_token(self.credentials)
+        token = self.token_fetcher.get_token()
         token_header = {'Authorization': f'Bearer {token}'}
 
         # If kwargs contains headers, update it with the token, if not,
@@ -111,7 +111,7 @@ class HaloAPIClient(APIClient):
         # If the token is invalid, refresh it and retry
         if response.status_code == 401:
             rm_token()
-            token = get_token(self.credentials)
+            token = self.token_fetcher.get_token()
             headers['Authorization'] = f'Bearer {token}'
             response = requests.request(
                 method,
@@ -208,7 +208,7 @@ class HaloAPITokenFetcher:
             token = response.json()['access_token']
         except requests.RequestException as e:
             logger.error(f"Failed to get new token: {e}")
-            raise exc.APIError('{}'.format(e))
+            raise APIError('{}'.format(e))
 
         cache.set(TOKEN_NAME, token, CACHE_EXPIRE_TIME)
         return token
