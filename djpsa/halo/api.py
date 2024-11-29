@@ -1,25 +1,21 @@
 import logging
 import requests
-from contextlib import contextmanager
 from django.conf import settings
 from django.core.cache import cache
 
 from djpsa.api.client import APIClient
 from djpsa.api.exceptions import APIError
-
-try:
-    # Redis is used for locking. It's optional.
-    import redis
-except ImportError:
-    redis = None
+from djpsa.utils import get_redis_client, LockNotAcquiredError, redis_lock
 
 logger = logging.getLogger(__name__)
 
-CACHE_EXPIRE_TIME = 3540
-REQUEST_TIMEOUT = 30
-LOCK_TIMEOUT = REQUEST_TIMEOUT + 1
-BLOCK_TIMEOUT = 60
-TOKEN_NAME = 'halo_token'
+
+HALO_TOKEN_CACHE_NAME = 'halo_token'
+CACHE_EXPIRE_TIME = 3540  # 1 hour less 1 minute so the token expires locally before
+# expiring remotely, so we avoid access denied errors.
+TOKEN_REQUEST_TIMEOUT = 30
+TOKEN_LOCK_LIFETIME = TOKEN_REQUEST_TIMEOUT + 1
+TOKEN_LOCK_ACQUIRE_TIMEOUT = 60
 
 
 class HaloAPICredentials:
@@ -43,7 +39,7 @@ class HaloAPIClient(APIClient):
                 settings.HALO_CLIENT_SECRET,
             )
 
-        self.resource_server = resource_server
+        self.resource_server = resource_server or settings.HALO_RESOURCE_SERVER
         if not self.resource_server.endswith('/'):
             self.resource_server += '/'
 
@@ -52,10 +48,12 @@ class HaloAPIClient(APIClient):
     def check_auth(self):
         return bool(self.token_fetcher.get_token(use_cache=False))
 
-    def get_page(self, page=None, params=None):
+    def get_page(self, page=None, batch_size=None, params=None):
         params = params or {}
         if page:
             params['page_no'] = page
+        if batch_size:
+            params['page_size'] = batch_size
         return self.fetch_resource(params=params)
 
     def get(self, record_id):
@@ -82,7 +80,7 @@ class HaloAPIClient(APIClient):
         request_params.update(params)
 
         if 'page' in request_params:
-            request_params['page_size'] = self.request_settings['batch_size']
+            request_params['page_size'] = params.get('batch_size', 100)
             request_params['pageinate'] = True
 
         return request_params
@@ -105,6 +103,7 @@ class HaloAPIClient(APIClient):
             endpoint_url,
             headers=headers,
             params=params,
+            timeout=self.request_settings['timeout'],
             **kwargs
         )
 
@@ -124,41 +123,10 @@ class HaloAPIClient(APIClient):
         return response
 
 
-@contextmanager
-def redis_lock(lock_name):
-    """
-    Get a distributed lock using Redis.
-    https://redis.readthedocs.io/en/stable/connections.html#redis.asyncio.client.Redis.lock
-    """
-    lock = get_redis_client().lock(
-        lock_name,
-        timeout=LOCK_TIMEOUT,
-        blocking_timeout=BLOCK_TIMEOUT
-    )
-    acquired = lock.acquire(blocking=True)
-    if not acquired:
-        raise LockNotAcquiredError()
-    try:
-        yield acquired
-    finally:
-        try:
-            lock.release()
-        except redis.exceptions.LockNotOwnedError:
-            pass
-
-
 class HaloAPITokenFetcher:
     def __init__(self, credentials, token_locking=True):
         self.credentials = credentials
         self.token_locking = token_locking
-
-        self.redis_client = None
-        if token_locking:
-            self.redis_client = redis.StrictRedis(
-            host=settings.REDIS['host'],
-            port=settings.REDIS['port'],
-            password=settings.REDIS['password'],
-        )
 
     def get_token(self, use_cache=True):
         if use_cache:
@@ -168,7 +136,7 @@ class HaloAPITokenFetcher:
 
         if self.token_locking:
             try:
-                with redis_lock('halo_token_lock'):
+                with redis_lock('halo_token_lock', TOKEN_LOCK_LIFETIME, TOKEN_LOCK_ACQUIRE_TIMEOUT):
                     # Check if a valid token is already available. May
                     # have been fetched by another worker thread while we
                     # were waiting.
@@ -188,7 +156,7 @@ class HaloAPITokenFetcher:
             return self._get_new_token_and_save()
 
     def _get_saved_token(self):
-        return cache.get(TOKEN_NAME)
+        return cache.get(HALO_TOKEN_CACHE_NAME)
 
     def _get_new_token_and_save(self):
         logger.debug('Getting new access token')
@@ -202,7 +170,7 @@ class HaloAPITokenFetcher:
                     'client_secret': self.credentials.client_secret,
                     'scope': 'all',
                 },
-                timeout=REQUEST_TIMEOUT,
+                timeout=TOKEN_REQUEST_TIMEOUT,
             )
             response.raise_for_status()
             token = response.json()['access_token']
@@ -210,5 +178,5 @@ class HaloAPITokenFetcher:
             logger.error(f"Failed to get new token: {e}")
             raise APIError('{}'.format(e))
 
-        cache.set(TOKEN_NAME, token, CACHE_EXPIRE_TIME)
+        cache.set(HALO_TOKEN_CACHE_NAME, token, CACHE_EXPIRE_TIME)
         return token

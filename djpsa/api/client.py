@@ -33,12 +33,10 @@ class APIClient:
 
         self.request_settings = {
             'timeout': 30.0,
-            'batch_size': 100,
             'max_attempts': 3,
         }
         if hasattr(settings, 'DJPSA_CONFIG'):
-            self.request_settings.update(settings.DJPSA_CONFIG())
-
+            self.request_settings.update(settings.DJPSA_CONFIG().get('request', {}))
 
     def add_condition(self, condition):
         self.conditions.append(condition)
@@ -86,7 +84,6 @@ class APIClient:
         """
         Issue the given type of request to the specified REST endpoint.
         """
-
         if not endpoint_url:
             endpoint_url = self._format_endpoint()
 
@@ -181,5 +178,5 @@ class APIClient:
     def _get_headers(self):
         return {}
 
-    def get_page(self, page=None, params=None):
+    def get_page(self, page=None, batch_size=None, params=None):
         raise NotImplementedError('Subclasses must implement this method.')

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from djpsa.halo.records import models
+from djpsa.halo import models
 
 
 @admin.register(models.Ticket)
