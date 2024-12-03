@@ -23,7 +23,7 @@ def retry_if_api_error(exception):
     Basically, don't retry on APIClientError, because those are the
     type of exceptions where retrying won't help (404s, 403s, etc.)
     """
-    return type(exception) is exc.APIError
+    return type(exception) is exc.APIServerError
 
 
 class APIClient:
@@ -31,9 +31,12 @@ class APIClient:
     def __init__(self, conditions=None):
         self.conditions = conditions if conditions else []
 
-        # get_request_settings is defined in the provider module of each PSA
-        self.request_settings = settings.PROVIDER.get_request_settings()
-        self.timeout = self.request_settings['timeout']
+        self.request_settings = {
+            'timeout': 30.0,
+            'max_attempts': 3,
+        }
+        if hasattr(settings, 'DJPSA_CONFIG'):
+            self.request_settings.update(settings.DJPSA_CONFIG().get('request', {}))
 
     def add_condition(self, condition):
         self.conditions.append(condition)
@@ -81,7 +84,6 @@ class APIClient:
         """
         Issue the given type of request to the specified REST endpoint.
         """
-
         if not endpoint_url:
             endpoint_url = self._format_endpoint()
 
@@ -176,5 +178,5 @@ class APIClient:
     def _get_headers(self):
         return {}
 
-    def get_page(self, page=None, params=None):
+    def get_page(self, page=None, batch_size=None, params=None):
         raise NotImplementedError('Subclasses must implement this method.')

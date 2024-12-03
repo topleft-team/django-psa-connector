@@ -21,7 +21,7 @@ coverage: ## check code coverage quickly with the default Python
 	coverage report -m
 
 install: clean
-	python setup.py install
+	pip install .
 
 # lint: ## check style with flake8
 # 	# flake8 config file at tox.ini

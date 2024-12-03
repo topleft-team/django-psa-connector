@@ -1,4 +1,4 @@
-from djpsa.halo.records import models
+from djpsa.halo import models
 from djpsa.halo.records import api
 from djpsa.sync.sync import Synchronizer
 

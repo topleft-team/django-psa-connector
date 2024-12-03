@@ -2,7 +2,7 @@ from typing import Any, List
 from django.utils import timezone
 from dateutil.parser import parse
 
-from djpsa.halo.records import models
+from djpsa.halo import models
 from djpsa.halo.records import api
 from djpsa.sync.sync import Synchronizer
 

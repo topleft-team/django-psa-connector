@@ -18,7 +18,7 @@ class Client(models.Model):
         verbose_name_plural = "Clients"
 
     def __str__(self):
-        return f"Client {self.id} - {self.name}"
+        return self.name
 
 
 class ClientTracker(Client):

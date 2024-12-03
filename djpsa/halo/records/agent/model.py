@@ -1,7 +1,6 @@
 from django.db import models
 from model_utils import FieldTracker
 
-
 class Agent(models.Model):
     name = models.CharField(max_length=255)
     is_disabled = models.BooleanField(default=False)
@@ -15,7 +14,7 @@ class Agent(models.Model):
         verbose_name_plural = "Agents"
 
     def __str__(self):
-        return f"Agent {self.id} - {self.name}"
+        return f"{self.firstname} {self.surname}"
 
 
 class AgentTracker(Agent):

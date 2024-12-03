@@ -1,12 +1,13 @@
 from django.contrib import admin
 
-from djpsa.halo.records import models
+from djpsa.halo import models
 
 
 @admin.register(models.Ticket)
 class TicketAdmin(admin.ModelAdmin):
     list_display = ('id', 'summary', 'client', 'status', 'priority', 'agent')
-    search_fields = ['id', 'summary']
+    search_fields = ['id', 'summary', 'client__name', 'status__name', 'priority__name', 'agent__name']
+    list_filter = ('status', 'priority', 'agent', 'client')
 
 
 @admin.register(models.Client)
@@ -29,8 +30,9 @@ class StatusAdmin(admin.ModelAdmin):
 
 @admin.register(models.Priority)
 class PriorityAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name')
+    list_display = ('id', 'name', 'colour')
     search_fields = ['id', 'name']
+    list_filter = ('is_hidden',)
 
 
 @admin.register(models.TicketType)

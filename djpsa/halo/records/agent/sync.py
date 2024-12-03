@@ -1,6 +1,6 @@
 from typing import Any, List
 
-from djpsa.halo.records import models
+from djpsa.halo import models
 from djpsa.halo.records import api
 from djpsa.sync.sync import Synchronizer
 
@@ -16,9 +16,10 @@ class AgentSynchronizer(Synchronizer):
             *args: Any,
             **kwargs: Any):
         super().__init__(full, conditions, *args, **kwargs)
-
         self.client.add_condition({
-            'includeactive': True,
+            'includeenabled': True,
+            'includedisabled': True,
+            'includeunassigned': False,
         })
 
     def _assign_field_data(self, instance, json_data):

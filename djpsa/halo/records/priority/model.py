@@ -12,7 +12,7 @@ class Priority(models.Model):
         verbose_name_plural = "Priorities"
 
     def __str__(self):
-        return f"Priority {self.id} - {self.name}"
+        return self.name
 
 
 class PriorityTracker(Priority):

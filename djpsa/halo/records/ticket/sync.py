@@ -3,10 +3,11 @@ from typing import Any, List
 from django.utils import timezone
 from dateutil.parser import parse
 
-from djpsa.halo.records import models
+from djpsa.halo import models
 from djpsa.halo.records import api
 from djpsa.halo.sync import ResponseKeyMixin, empty_date_parser
 from djpsa.sync.sync import Synchronizer
+from djpsa.halo.records.agent.api import UNASSIGNED_AGENT_ID
 
 
 class TicketSynchronizer(ResponseKeyMixin, Synchronizer):
@@ -122,3 +123,5 @@ class TicketSynchronizer(ResponseKeyMixin, Synchronizer):
             empty_date_parser(last_incoming_email_date)
 
         self.set_relations(instance, json_data)
+        if instance.agent_id == UNASSIGNED_AGENT_ID:
+            instance.agent = None

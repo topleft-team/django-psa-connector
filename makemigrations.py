@@ -17,9 +17,9 @@ settings.configure(
 def makemigrations(merge):
     django.setup()
     if merge:
-        call_command('makemigrations', 'sync', '--merge')
+        call_command('makemigrations', '--merge')
     else:
-        call_command('makemigrations', 'sync')
+        call_command('makemigrations')
 
 
 if __name__ == '__main__':

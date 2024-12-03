@@ -89,12 +89,17 @@ class Synchronizer:
                  conditions: List = None,
                  *args: Any,
                  **kwargs: Any):
-        request_settings = settings.PROVIDER.get_request_settings()
+
+        self.sync_settings = {
+            'batch_size': 100,
+        }
+        if hasattr(settings, 'DJPSA_CONFIG'):
+            self.request_settings.update(settings.DJPSA_CONFIG().get('sync', {}))
 
         conditions = conditions or []
         self.client = self.client_class(conditions)
         self.partial_sync_support = True
-        self.batch_size = request_settings['batch_size']
+        self.batch_size = self.sync_settings['batch_size']
         self.full = full
 
     def get_sync_job_qset(self):
@@ -145,14 +150,13 @@ class Synchronizer:
         """
         For all pages of results, save each page of results to the DB.
         """
-
         page = 1
         while True:
             logger.info(
                 'Fetching {} records, batch {}'.format(
                     self.get_model_name(), page)
             )
-            response = self.client.get_page(page=page, params=params)
+            response = self.client.get_page(page=page, batch_size=self.batch_size, params=params)
             records = self._unpack_records(response)
             self.persist_page(records, results)
             page += 1
