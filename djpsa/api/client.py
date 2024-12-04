@@ -36,7 +36,8 @@ class APIClient:
             'max_attempts': 3,
         }
         if hasattr(settings, 'DJPSA_CONFIG'):
-            self.request_settings.update(settings.DJPSA_CONFIG().get('request', {}))
+            self.request_settings.update(
+                settings.DJPSA_CONFIG().get('request', {}))
 
     def add_condition(self, condition):
         self.conditions.append(condition)

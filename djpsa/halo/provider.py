@@ -7,8 +7,6 @@ For example, the PSA specific request decorator is only used in the api app,
 so it should be in api.py.
 """
 
-from django.conf import settings
-
 from djpsa.halo.records import sync
 
 f = {s.model_class: s for s in [

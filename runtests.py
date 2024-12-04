@@ -57,6 +57,8 @@ settings.configure(
     HALO_CLIENT_ID="fake_client_id",
     HALO_CLIENT_SECRET="fake_client_secret",
     DJPSA_CONF_CALLABLE=djpsa_configuration,
+    HALO_AUTHORISATION_SERVER="https://example.com/",
+    HALO_RESOURCE_SERVER="https://example.com/",
     REDIS={
         'host': env('REDIS_HOST', default=str('127.0.0.1')),
         'port': env('REDIS_PORT', default=6379),

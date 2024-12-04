@@ -6,7 +6,8 @@ from djpsa.halo.api import HaloAPIClient
 class TestHaloAPIClient(unittest.TestCase):
 
     @patch('djpsa.halo.api.requests.request')
-    @patch('djpsa.halo.api.get_token', return_value='test_token')
+    @patch('djpsa.halo.api.HaloAPITokenFetcher.get_token',
+           return_value='test_token')
     def test_request_success(self, _, mock_request):
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -20,11 +21,12 @@ class TestHaloAPIClient(unittest.TestCase):
             'GET',
             'http://example.com',
             headers={'Authorization': 'Bearer test_token'},
-            params=None
+            params=None,
+            timeout=30.0
         )
 
     @patch('djpsa.halo.api.requests.request')
-    @patch('djpsa.halo.api.get_token')
+    @patch('djpsa.halo.api.HaloAPITokenFetcher.get_token')
     def test_request_token_refresh(
             self, mock_get_token, mock_request):
         mock_get_token.side_effect = ['expired_token', 'new_token']
