@@ -94,7 +94,8 @@ class Synchronizer:
             'batch_size': 100,
         }
         if hasattr(settings, 'DJPSA_CONFIG'):
-            self.request_settings.update(settings.DJPSA_CONFIG().get('sync', {}))
+            self.request_settings.update(
+                settings.DJPSA_CONFIG().get('sync', {}))
 
         conditions = conditions or []
         self.client = self.client_class(conditions)
@@ -156,7 +157,8 @@ class Synchronizer:
                 'Fetching {} records, batch {}'.format(
                     self.get_model_name(), page)
             )
-            response = self.client.get_page(page=page, batch_size=self.batch_size, params=params)
+            response = self.client.get_page(
+                page=page, batch_size=self.batch_size, params=params)
             records = self._unpack_records(response)
             self.persist_page(records, results)
             page += 1

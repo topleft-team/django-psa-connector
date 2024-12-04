@@ -5,14 +5,14 @@ from django.core.cache import cache
 
 from djpsa.api.client import APIClient
 from djpsa.api.exceptions import APIError
-from djpsa.utils import get_redis_client, LockNotAcquiredError, redis_lock
+from djpsa.utils import LockNotAcquiredError, redis_lock
 
 logger = logging.getLogger(__name__)
 
 
 HALO_TOKEN_CACHE_NAME = 'halo_token'
-CACHE_EXPIRE_TIME = 3540  # 1 hour less 1 minute so the token expires locally before
-# expiring remotely, so we avoid access denied errors.
+CACHE_EXPIRE_TIME = 3540  # 1 hour less 1 minute so the token expires
+# locally before expiring remotely, so we avoid access denied errors.
 TOKEN_REQUEST_TIMEOUT = 30
 TOKEN_LOCK_LIFETIME = TOKEN_REQUEST_TIMEOUT + 1
 TOKEN_LOCK_ACQUIRE_TIMEOUT = 60
@@ -30,7 +30,11 @@ class HaloAPICredentials:
 class HaloAPIClient(APIClient):
     endpoint = None
 
-    def __init__(self, conditions=None, credentials=None, resource_server=None, token_locking=True):
+    def __init__(self,
+                 conditions=None,
+                 credentials=None,
+                 resource_server=None,
+                 token_locking=True):
         super().__init__(conditions)
         if not credentials:
             credentials = HaloAPICredentials(
@@ -109,7 +113,6 @@ class HaloAPIClient(APIClient):
 
         # If the token is invalid, refresh it and retry
         if response.status_code == 401:
-            rm_token()
             token = self.token_fetcher.get_token()
             headers['Authorization'] = f'Bearer {token}'
             response = requests.request(
@@ -136,7 +139,10 @@ class HaloAPITokenFetcher:
 
         if self.token_locking:
             try:
-                with redis_lock('halo_token_lock', TOKEN_LOCK_LIFETIME, TOKEN_LOCK_ACQUIRE_TIMEOUT):
+                with redis_lock(
+                        'halo_token_lock',
+                        TOKEN_LOCK_LIFETIME,
+                        TOKEN_LOCK_ACQUIRE_TIMEOUT):
                     # Check if a valid token is already available. May
                     # have been fetched by another worker thread while we
                     # were waiting.
@@ -146,8 +152,9 @@ class HaloAPITokenFetcher:
                             return token
 
                     # No valid token- get a new one.
-                    # We'll save it even if we didn't use the cache, because it's possible
-                    # getting a new token invalidates prior tokens.
+                    # We'll save it even if we didn't use the cache, because
+                    # it's possible getting a new token invalidates prior
+                    # tokens.
                     return self._get_new_token_and_save()
             except LockNotAcquiredError as e:
                 logger.error(f"Could not acquire lock: {e}")

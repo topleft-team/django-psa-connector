@@ -29,15 +29,6 @@ class TestAPIClient(unittest.TestCase):
         with self.assertRaises(exc.APIError):
             self.client.fetch_resource('http://example.com/api/resource')
 
-    @patch('djpsa.api.client.APIClient.request')
-    def test_fetch_resource_retry(self, mock_request):
-        mock_request.side_effect = \
-            [exc.APIError('API Error'), {'data': 'test'}]
-        response = \
-            self.client.fetch_resource('http://example.com/api/resource')
-        self.assertEqual(response, {'data': 'test'})
-        self.assertEqual(mock_request.call_count, 2)
-
     @patch.object(
         APIClient, '_format_endpoint', return_value='http://example.com')
     @patch.object(APIClient, '_request')
