@@ -1,10 +1,10 @@
 from djpsa.halo import models
 from djpsa.halo.records import api
 
-from djpsa.sync.sync import Synchronizer
+from djpsa.halo.sync import HaloSynchronizer
 
 
-class StatusSynchronizer(Synchronizer):
+class StatusSynchronizer(HaloSynchronizer):
     model_class = models.StatusTracker
     client_class = api.StatusAPI
 

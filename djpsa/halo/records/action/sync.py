@@ -2,11 +2,11 @@ from djpsa.halo import models
 from djpsa.halo.records import api
 from djpsa.halo.sync import \
     ResponseKeyMixin, HaloChildFetchRecordsMixin, empty_date_parser
-from djpsa.sync.sync import Synchronizer
+from djpsa.halo.sync import HaloSynchronizer
 
 
 class ActionSynchronizer(
-        ResponseKeyMixin, HaloChildFetchRecordsMixin, Synchronizer):
+        ResponseKeyMixin, HaloChildFetchRecordsMixin, HaloSynchronizer):
     lookup_key = 'ticket_action_id'
     model_class = models.ActionTracker
     client_class = api.ActionAPI
