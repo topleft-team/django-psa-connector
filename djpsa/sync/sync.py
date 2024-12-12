@@ -152,6 +152,8 @@ class Synchronizer:
         For all pages of results, save each page of results to the DB.
         """
         page = 1
+        last_recorded_id = None
+
         while True:
             logger.info(
                 'Fetching {} records, batch {}'.format(
@@ -160,12 +162,23 @@ class Synchronizer:
             response = self.client.get_page(
                 page=page, batch_size=self.batch_size, params=params)
             records = self._unpack_records(response)
+
+            current_id = records[0]['id'] if records else None
+            if last_recorded_id == current_id:
+                # Halo has sent the same page of records again, so we've
+                # reached the end of the records. (Other PSA APIs do
+                # not have this issue.) Break now so we don't add extra
+                # records to the skipped count.
+                break
+
             self.persist_page(records, results)
             page += 1
             if len(records) < self.batch_size:
                 # This page wasn't full, so there's no more records after
                 # this page.
                 break
+            last_recorded_id = records[0]['id'] if records else None
+
         return results
 
     def persist_page(self, records, results):
