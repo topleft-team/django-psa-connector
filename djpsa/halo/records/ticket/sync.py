@@ -68,7 +68,6 @@ class TicketSynchronizer(ResponseKeyMixin, HaloSynchronizer):
         instance.estimate = json_data.get('estimate')
         instance.estimated_days = json_data.get('estimateddays')
         instance.exclude_from_slas = json_data.get('excludefromslas', False)
-        instance.team = json_data.get('team')
         instance.reviewed = json_data.get('reviewed', False)
         instance.read = json_data.get('read', False)
         instance.use = json_data.get('use')
@@ -122,6 +121,10 @@ class TicketSynchronizer(ResponseKeyMixin, HaloSynchronizer):
         last_incoming_email_date = json_data.get('lastincomingemaildate')
         instance.last_incoming_email_date = \
             empty_date_parser(last_incoming_email_date)
+
+        team_name = json_data.get('team')
+
+        instance.team = models.Team.objects.filter(name=team_name).first()
 
         self.set_relations(instance, json_data)
         if instance.agent_id == UNASSIGNED_AGENT_ID:
