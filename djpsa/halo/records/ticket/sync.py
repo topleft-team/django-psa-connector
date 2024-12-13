@@ -8,6 +8,7 @@ from djpsa.halo.records import api
 from djpsa.halo.sync import ResponseKeyMixin, empty_date_parser
 from djpsa.halo.sync import HaloSynchronizer
 from djpsa.halo.records.agent.api import UNASSIGNED_AGENT_ID
+from djpsa.halo.records.client.api import UNASSIGNED_CLIENT_ID
 
 
 class TicketSynchronizer(ResponseKeyMixin, HaloSynchronizer):
@@ -125,3 +126,5 @@ class TicketSynchronizer(ResponseKeyMixin, HaloSynchronizer):
         self.set_relations(instance, json_data)
         if instance.agent_id == UNASSIGNED_AGENT_ID:
             instance.agent = None
+        if instance.client_id == UNASSIGNED_CLIENT_ID:
+            instance.client = None

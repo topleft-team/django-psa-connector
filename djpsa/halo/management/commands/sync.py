@@ -27,6 +27,7 @@ class Command(BaseCommand):
             ('ticket', (sync.TicketSynchronizer, _('Ticket'))),
             ('appointment', (sync.AppointmentSynchronizer, _('Appointment'))),
             ('action', (sync.ActionSynchronizer, _('Action'))),
+            ('team', (sync.TeamSynchronizer, _('Team'))),
         ])
 
     def add_arguments(self, parser):

@@ -10,6 +10,7 @@ class Agent(models.Model):
     firstname = models.CharField(max_length=255, blank=True, null=True)
     surname = models.CharField(max_length=255, blank=True, null=True)
     colour = models.CharField(max_length=255, blank=True, null=True)
+    teams = models.ManyToManyField('Team', related_name='agents', blank=True)
 
     class Meta:
         verbose_name_plural = "Agents"
