@@ -83,8 +83,8 @@ class HaloAPIClient(APIClient):
 
         request_params.update(params)
 
-        if 'page' in request_params:
-            request_params['page_size'] = params.get('batch_size', 100)
+        if 'page_no' in request_params:
+            request_params['page_size'] = params.get('page_size', 100)
             request_params['pageinate'] = True
 
         return request_params
