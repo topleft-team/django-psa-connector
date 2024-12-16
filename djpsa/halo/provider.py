@@ -6,45 +6,42 @@ be here.
 For example, the PSA specific request decorator is only used in the api app,
 so it should be in api.py.
 """
-from collections import OrderedDict
 
 from djpsa.halo.records import sync
-from django.utils.translation import gettext_lazy as _
 
 
 def critical_priority_sync():
-    return OrderedDict([
-            ('user', (sync.HaloUserSynchronizer, _('User'))),
-            ('agent', (sync.AgentSynchronizer, _('Agent'))),
-            ('client', (sync.ClientSynchronizer, _('Client'))),
-            ('ticket', (sync.TicketSynchronizer, _('Ticket'))),
-            ('appointment', (sync.AppointmentSynchronizer, _('Appointment'))),
-            ('action', (sync.ActionSynchronizer, _('Action'))),
-        ])
+    return [
+            sync.HaloUserSynchronizer,
+            sync.AgentSynchronizer,
+            sync.ClientSynchronizer,
+            sync.TicketSynchronizer,
+            sync.AppointmentSynchronizer,
+            sync.ActionSynchronizer,
+        ]
 
 
 def high_priority_sync():
-    return OrderedDict([
-        ('status', (sync.StatusSynchronizer, _('Status'))),
-        ('priority', (sync.PrioritySynchronizer, _('Priority'))),
-        ('team', (sync.TeamSynchronizer, _('Team'))),
-        ('user', (sync.HaloUserSynchronizer, _('User'))),
-        ('agent', (sync.AgentSynchronizer, _('Agent'))),
-        ('client', (sync.ClientSynchronizer, _('Client'))),
-        ('ticket', (sync.TicketSynchronizer, _('Ticket'))),
-        ('appointment', (sync.AppointmentSynchronizer, _('Appointment'))),
-        ('action', (sync.ActionSynchronizer, _('Action'))),
-    ])
+    return [
+        sync.StatusSynchronizer,
+        sync.PrioritySynchronizer,
+        sync.TeamSynchronizer,
+        sync.HaloUserSynchronizer,
+        sync.AgentSynchronizer,
+        sync.ClientSynchronizer,
+        sync.TicketSynchronizer,
+        sync.AppointmentSynchronizer,
+        sync.ActionSynchronizer,
+    ]
 
 
 def medium_priority_sync():
-    return OrderedDict([
-        ('sla', (sync.SLASynchronizer, _('SLA'))),
-        ('site', (sync.SiteSynchronizer, _('Site'))),
-        ('ticket_type', (sync.TicketTypeSynchronizer, _('TicketType'))),
-    ])
+    return [
+        sync.SLASynchronizer,
+        sync.SiteSynchronizer,
+        sync.TicketTypeSynchronizer,
+    ]
 
 
 def low_priority_sync():
-    return OrderedDict([
-    ])
+    return []
