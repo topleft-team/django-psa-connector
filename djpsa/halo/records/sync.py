@@ -13,3 +13,40 @@ from djpsa.halo.records.halouser.sync import HaloUserSynchronizer
 from djpsa.halo.records.tickettype.sync import TicketTypeSynchronizer
 from djpsa.halo.records.action.sync import ActionSynchronizer
 from djpsa.halo.records.team.sync import TeamSynchronizer
+
+
+def critical_priority_sync():
+    return [
+            HaloUserSynchronizer,
+            AgentSynchronizer,
+            ClientSynchronizer,
+            TicketSynchronizer,
+            AppointmentSynchronizer,
+            ActionSynchronizer,
+        ]
+
+
+def high_priority_sync():
+    return [
+        StatusSynchronizer,
+        PrioritySynchronizer,
+        TeamSynchronizer,
+        HaloUserSynchronizer,
+        AgentSynchronizer,
+        ClientSynchronizer,
+        TicketSynchronizer,
+        AppointmentSynchronizer,
+        ActionSynchronizer,
+    ]
+
+
+def medium_priority_sync():
+    return [
+        SLASynchronizer,
+        SiteSynchronizer,
+        TicketTypeSynchronizer,
+    ]
+
+
+def low_priority_sync():
+    return []
