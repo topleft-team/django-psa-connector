@@ -18,15 +18,9 @@ class Command(BaseCommand):
         self.synchronizer_map = OrderedDict([
             ('status', (sync.StatusSynchronizer, _('Status'))),
             ('priority', (sync.PrioritySynchronizer, _('Priority'))),
-            ('client', (sync.ClientSynchronizer, _('Client'))),
             ('sla', (sync.SLASynchronizer, _('SLA'))),
             ('site', (sync.SiteSynchronizer, _('Site'))),
-            ('user', (sync.HaloUserSynchronizer, _('User'))),
-            ('agent', (sync.AgentSynchronizer, _('Agent'))),
             ('ticket_type', (sync.TicketTypeSynchronizer, _('TicketType'))),
-            ('ticket', (sync.TicketSynchronizer, _('Ticket'))),
-            ('appointment', (sync.AppointmentSynchronizer, _('Appointment'))),
-            ('action', (sync.ActionSynchronizer, _('Action'))),
             ('team', (sync.TeamSynchronizer, _('Team'))),
         ])
 
