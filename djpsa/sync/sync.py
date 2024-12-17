@@ -14,11 +14,6 @@ UPDATED = 2
 SKIPPED = 3
 
 
-def get_synchronizer(model_class, **kwargs):
-    sync_class = settings.PROVIDER.sync_factory(model_class)
-    return sync_class(**kwargs)
-
-
 def log_sync_job(f):
     def wrapper(*args, **kwargs):
         sync_instance = args[0]
