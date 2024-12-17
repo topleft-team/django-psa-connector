@@ -14,9 +14,12 @@ from djpsa.halo.records.tickettype.sync import TicketTypeSynchronizer
 from djpsa.halo.records.action.sync import ActionSynchronizer
 from djpsa.halo.records.team.sync import TeamSynchronizer
 
+from djpsa.sync.grades import SyncGrades
 
-def critical_priority_sync():
-    return [
+
+class HaloSyncGrades(SyncGrades):
+    def partial_grades(self):
+        return [
             HaloUserSynchronizer,
             AgentSynchronizer,
             ClientSynchronizer,
@@ -25,28 +28,27 @@ def critical_priority_sync():
             ActionSynchronizer,
         ]
 
+    def operational_grades(self):
+        return [
+            HaloUserSynchronizer,
+            AgentSynchronizer,
+            ClientSynchronizer,
+            TicketSynchronizer,
+            AppointmentSynchronizer,
+            ActionSynchronizer,
+        ]
 
-def high_priority_sync():
-    return [
-        StatusSynchronizer,
-        PrioritySynchronizer,
-        TeamSynchronizer,
-        HaloUserSynchronizer,
-        AgentSynchronizer,
-        ClientSynchronizer,
-        TicketSynchronizer,
-        AppointmentSynchronizer,
-        ActionSynchronizer,
-    ]
-
-
-def medium_priority_sync():
-    return [
-        SLASynchronizer,
-        SiteSynchronizer,
-        TicketTypeSynchronizer,
-    ]
-
-
-def low_priority_sync():
-    return []
+    def configuration_grades(self):
+        """
+        Return a list of synchronizers for resources that change infrequently-
+        such as on a weekly or monthly basis. For example, ticket types, statuses,
+        priorities, etc.
+        """
+        return [
+            SLASynchronizer,
+            StatusSynchronizer,
+            SiteSynchronizer,
+            PrioritySynchronizer,
+            TicketTypeSynchronizer,
+            TeamSynchronizer,
+        ]
