@@ -24,6 +24,8 @@ class Ticket(models.Model):
         'TicketType', blank=True, null=True, on_delete=models.CASCADE)
     project = models.ForeignKey(
         'Ticket', blank=True, null=True, on_delete=models.CASCADE)
+    team = models.ForeignKey(
+        'Team', blank=True, null=True, on_delete=models.CASCADE)
     user_email = models.EmailField(blank=True, null=True)
     reported_by = models.CharField(max_length=255, blank=True, null=True)
     end_user_status = models.IntegerField(blank=True, null=True)
@@ -60,7 +62,6 @@ class Ticket(models.Model):
     estimate = models.FloatField(blank=True, null=True)
     estimated_days = models.FloatField(blank=True, null=True)
     exclude_from_sla = models.BooleanField(default=False)
-    team = models.CharField(max_length=255, blank=True, null=True)
     reviewed = models.BooleanField(default=False)
     read = models.BooleanField(default=False)
     email_to_list = models.TextField(blank=True, null=True)

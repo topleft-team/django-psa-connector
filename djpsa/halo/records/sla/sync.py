@@ -4,6 +4,7 @@ from djpsa.halo import sync
 
 
 class SLASynchronizer(sync.HaloSynchronizer):
+
     model_class = models.SLATracker
     client_class = api.StatusAPI
 

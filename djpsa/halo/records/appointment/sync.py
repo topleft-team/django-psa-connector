@@ -11,8 +11,10 @@ class AppointmentSynchronizer(
         sync.CreateMixin,
         sync.UpdateMixin,
         sync.DeleteMixin,
-        sync.HaloSynchronizer,
-        ):
+        sync.ResponseKeyMixin,
+        sync.HaloSynchronizer
+    ):
+    response_key = 'appointments'
     model_class = models.AppointmentTracker
     client_class = api.AppointmentAPI
 

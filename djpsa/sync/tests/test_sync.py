@@ -15,7 +15,6 @@ class TestSynchronizer(TestCase):
         settings.PROVIDER = MagicMock()
         settings.PROVIDER.get_request_settings.return_value = \
             {'batch_size': 100}
-        settings.PROVIDER.sync_factory.return_value = MagicMock()
 
         # Mock model class
         self.model_class_mock = MagicMock()

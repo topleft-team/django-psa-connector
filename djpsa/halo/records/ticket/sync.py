@@ -5,12 +5,12 @@ from dateutil.parser import parse
 
 from djpsa.halo import models
 from djpsa.halo.records import api
-from djpsa.halo.sync import ResponseKeyMixin, empty_date_parser
 from djpsa.halo import sync
 from djpsa.halo.records.agent.api import UNASSIGNED_AGENT_ID
+from djpsa.halo.records.client.api import UNASSIGNED_CLIENT_ID
 
 
-class TicketSynchronizer(ResponseKeyMixin,
+class TicketSynchronizer(sync.ResponseKeyMixin,
                          sync.CreateMixin,
                          sync.UpdateMixin,
                          sync.DeleteMixin,
@@ -72,7 +72,6 @@ class TicketSynchronizer(ResponseKeyMixin,
         instance.estimate = json_data.get('estimate')
         instance.estimated_days = json_data.get('estimateddays')
         instance.exclude_from_slas = json_data.get('excludefromslas', False)
-        instance.team = json_data.get('team')
         instance.reviewed = json_data.get('reviewed', False)
         instance.read = json_data.get('read', False)
         instance.use = json_data.get('use')
@@ -84,25 +83,25 @@ class TicketSynchronizer(ResponseKeyMixin,
         instance.impact_level = json_data.get('impactlevel')
 
         date_occurred = json_data.get('dateoccurred')
-        instance.date_occurred = empty_date_parser(date_occurred)
+        instance.date_occurred = sync.empty_date_parser(date_occurred)
 
         respond_by_date = json_data.get('respondbydate')
-        instance.respond_by_date = empty_date_parser(respond_by_date)
+        instance.respond_by_date = sync.empty_date_parser(respond_by_date)
 
         fix_by_date = json_data.get('fixbydate')
-        instance.fix_by_date = empty_date_parser(fix_by_date)
+        instance.fix_by_date = sync.empty_date_parser(fix_by_date)
 
         date_assigned = json_data.get('dateassigned')
-        instance.date_assigned = empty_date_parser(date_assigned)
+        instance.date_assigned = sync.empty_date_parser(date_assigned)
 
         response_date = json_data.get('responsedate')
-        instance.response_date = empty_date_parser(response_date)
+        instance.response_date = sync.empty_date_parser(response_date)
 
         deadline_date = json_data.get('deadlinedate')
-        instance.deadline_date = empty_date_parser(deadline_date)
+        instance.deadline_date = sync.empty_date_parser(deadline_date)
 
         start_date = json_data.get('startdate')
-        instance.start_date = empty_date_parser(start_date)
+        instance.start_date = sync.empty_date_parser(start_date)
 
         if instance.start_date:
             # Don't set time if start date is empty.
@@ -113,7 +112,7 @@ class TicketSynchronizer(ResponseKeyMixin,
             )
 
         target_date = json_data.get('targetdate')
-        instance.target_date = empty_date_parser(target_date)
+        instance.target_date = sync.empty_date_parser(target_date)
 
         if instance.target_date:
             # Don't set time if target date is empty.
@@ -125,8 +124,14 @@ class TicketSynchronizer(ResponseKeyMixin,
 
         last_incoming_email_date = json_data.get('lastincomingemaildate')
         instance.last_incoming_email_date = \
-            empty_date_parser(last_incoming_email_date)
+            sync.empty_date_parser(last_incoming_email_date)
+
+        team_name = json_data.get('team')
+
+        instance.team = models.Team.objects.filter(name=team_name).first()
 
         self.set_relations(instance, json_data)
         if instance.agent_id == UNASSIGNED_AGENT_ID:
             instance.agent = None
+        if instance.client_id == UNASSIGNED_CLIENT_ID:
+            instance.client = None

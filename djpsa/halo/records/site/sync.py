@@ -5,7 +5,8 @@ from djpsa.halo.sync import ResponseKeyMixin
 from djpsa.halo import sync
 
 
-class SiteSynchronizer(ResponseKeyMixin, sync.HaloSynchronizer):
+class SiteSynchronizer(sync.ResponseKeyMixin, sync.HaloSynchronizer):
+
     model_class = models.SiteTracker
     response_key = 'sites'
     client_class = api.SiteAPI

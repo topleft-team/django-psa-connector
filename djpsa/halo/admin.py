@@ -82,3 +82,9 @@ class ActionAdmin(admin.ModelAdmin):
         'note')
     search_fields = \
         ['id', 'ticket__id', 'time_taken', 'project__id', 'agent__id']
+
+
+@admin.register(models.Team)
+class TeamAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'ticket_count')
+    search_fields = ['id', 'name']

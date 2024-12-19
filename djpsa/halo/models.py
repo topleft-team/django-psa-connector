@@ -12,3 +12,4 @@ from djpsa.halo.records.appointment.model import Appointment, AppointmentTracker
 from djpsa.halo.records.halouser.model import HaloUser, HaloUserTracker
 from djpsa.halo.records.tickettype.model import TicketType, TicketTypeTracker
 from djpsa.halo.records.action.model import Action, ActionTracker
+from djpsa.halo.records.team.model import Team, TeamTracker

@@ -4,6 +4,7 @@ from djpsa.halo import sync
 
 
 class PrioritySynchronizer(sync.HaloSynchronizer):
+
     model_class = models.PriorityTracker
     lookup_key = 'priorityid'
     client_class = api.PriorityAPI
