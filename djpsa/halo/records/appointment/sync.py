@@ -7,13 +7,11 @@ from djpsa.halo.records import api
 from djpsa.halo import sync
 
 
-class AppointmentSynchronizer(
-        sync.CreateMixin,
-        sync.UpdateMixin,
-        sync.DeleteMixin,
-        sync.ResponseKeyMixin,
-        sync.HaloSynchronizer
-    ):
+class AppointmentSynchronizer(sync.CreateMixin,
+                              sync.UpdateMixin,
+                              sync.DeleteMixin,
+                              sync.ResponseKeyMixin,
+                              sync.HaloSynchronizer):
     response_key = 'appointments'
     model_class = models.AppointmentTracker
     client_class = api.AppointmentAPI

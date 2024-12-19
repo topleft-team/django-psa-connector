@@ -1,7 +1,6 @@
 from typing import Any, List
 from djpsa.halo import models
 from djpsa.halo.records import api
-from djpsa.halo.sync import ResponseKeyMixin
 from djpsa.halo import sync
 
 
