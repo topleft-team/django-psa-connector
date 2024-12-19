@@ -22,12 +22,7 @@ from djpsa.sync.grades import SyncGrades
 class HaloSyncGrades(SyncGrades):
     def partial_grades(self):
         return [
-            HaloUserSynchronizer,
-            AgentSynchronizer,
-            ClientSynchronizer,
             TicketSynchronizer,
-            AppointmentSynchronizer,
-            ActionSynchronizer,
         ]
 
     def operational_grades(self):
