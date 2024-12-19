@@ -1,6 +1,8 @@
 # This file is used to import all the synchronizers for the records module
 # from a single location.
 
+from django.utils.translation import gettext_lazy as _
+
 from djpsa.halo.records.ticket.sync import TicketSynchronizer
 from djpsa.halo.records.priority.sync import PrioritySynchronizer
 from djpsa.halo.records.status.sync import StatusSynchronizer
@@ -20,12 +22,7 @@ from djpsa.sync.grades import SyncGrades
 class HaloSyncGrades(SyncGrades):
     def partial_grades(self):
         return [
-            HaloUserSynchronizer,
-            AgentSynchronizer,
-            ClientSynchronizer,
             TicketSynchronizer,
-            AppointmentSynchronizer,
-            ActionSynchronizer,
         ]
 
     def operational_grades(self):
@@ -52,3 +49,19 @@ class HaloSyncGrades(SyncGrades):
             TicketTypeSynchronizer,
             TeamSynchronizer,
         ]
+
+
+sync_command_list = [
+        ('status', (StatusSynchronizer, _('Status'))),
+        ('priority', (PrioritySynchronizer, _('Priority'))),
+        ('client', (ClientSynchronizer, _('Client'))),
+        ('sla', (SLASynchronizer, _('SLA'))),
+        ('site', (SiteSynchronizer, _('Site'))),
+        ('user', (HaloUserSynchronizer, _('User'))),
+        ('agent', (AgentSynchronizer, _('Agent'))),
+        ('ticket_type', (TicketTypeSynchronizer, _('TicketType'))),
+        ('ticket', (TicketSynchronizer, _('Ticket'))),
+        ('appointment', (AppointmentSynchronizer, _('Appointment'))),
+        ('action', (ActionSynchronizer, _('Action'))),
+        ('team', (TeamSynchronizer, _('Team'))),
+    ]
