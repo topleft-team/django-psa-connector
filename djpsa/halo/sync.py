@@ -29,7 +29,10 @@ def empty_date_parser(date_time):
     # This will set the model fields as None if it is an impossible date.
     # Set to 1980 in case they also do 1950 or something and I haven't seen it.
     if date_time:
-        date_time = timezone.make_aware(parse(date_time), timezone.utc)
+        try:
+            date_time = timezone.make_aware(parse(date_time), timezone.utc)
+        except ValueError:
+            date_time = parse(date_time)
         return date_time if date_time.year > 1980 else None
 
 
@@ -41,21 +44,42 @@ class ResponseKeyMixin:
         return records
 
 
-class CreateMixin:
+class ApiConvertMixin:
+    client = None
+    model_class = None
+
+    def _convert_fields_to_api_format(self, data):
+        """
+        Converts the model field names to the API field names.
+        """
+        api_data = {}
+        for key, value in data.items():
+            api_data[self.model_class.API_FIELDS[key]] = value
+        return api_data
+
+
+class CreateMixin(ApiConvertMixin):
 
     def create(self, data, *args, **kwargs):
         body = self._convert_fields_to_api_format(data)
-        return self.client.create(body)
+        response = self.client.create(body)
+
+        instance, _ = self.update_or_create_instance(response)
+        return instance
 
 
-class UpdateMixin:
+class UpdateMixin(ApiConvertMixin):
 
-    def update(self, record_id, data, *args, **kwargs):
+    def update(self, record, data, *args, **kwargs):
         body = self._convert_fields_to_api_format(data)
-        return self.client.update(record_id, body)
+        response = self.client.update(record.id, body)
+
+        instance, _ = self.update_or_create_instance(response)
+        return instance
 
 
 class DeleteMixin:
+    client = None
 
     def delete(self, record_id, *args, **kwargs):
         return self.client.delete(record_id)
@@ -67,15 +91,6 @@ class HaloSynchronizer(Synchronizer):
         return {
             self.last_updated_field: last_sync_time
         }
-
-    def _convert_fields_to_api_format(self, data):
-        """
-        Converts the model field names to the API field names.
-        """
-        api_data = {}
-        for key, value in data.items():
-            api_data[self.model_class.API_FIELDS[key]] = value
-        return api_data
 
 
 class HaloChildFetchRecordsMixin:
