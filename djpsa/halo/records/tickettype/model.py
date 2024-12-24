@@ -12,6 +12,9 @@ class TicketType(models.Model):
     copy_attachments_to_related = models.BooleanField(default=False)
     use = models.CharField(max_length=255, blank=True, null=True)
 
+    def __str__(self):
+        return self.name
+
 
 class TicketTypeTracker(TicketType):
     tracker = FieldTracker()
