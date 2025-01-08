@@ -1,10 +1,16 @@
 import logging
+import secrets
+import string
+
+from django.conf import settings
 
 from djpsa.halo.api import WebhookAPIClient, NotificationAPIClient
 from djpsa.utils import DjPSASettings
 from djpsa.sync.callbacks import CallbacksHandler
 
 logger = logging.getLogger(__name__)
+
+HALO_CALLBACK_USERNAME = 'halowebhookauthentication'
 
 event_data = {
     'faults': [{
@@ -98,6 +104,26 @@ class HaloCallbacksHandler(CallbacksHandler):
 
     def _build_get_conditions(self):
         return {}
+
+    def _generate_password(self):
+        return ''.join(secrets.choice(
+            f"{string.ascii_letters}{string.digits}") for _ in range(20))
+
+    def _build_post_data(self, callback):
+
+        auth_data = {
+            'authentication_header': "Token",
+            'basic_password': settings.CALLBACK_SECRET,
+            'authentication_type': "3",
+        }
+
+        callback = {
+            **callback,
+            **auth_data,
+        }
+
+        callback_post_data = {**self.base_callback_data, **callback}
+        return callback_post_data
 
     def _clean_callbacks(self, callbacks):
 

@@ -1,9 +1,13 @@
 import json
 import logging
+import hmac
+import hashlib
+import base64
 
 from braces import views
 from django.views.generic import View
 from django.http import HttpResponse
+from django.conf import settings
 
 from djpsa.halo.records.ticket.sync import TicketSynchronizer
 
@@ -19,6 +23,19 @@ class CallBackView(views.CsrfExemptMixin,
 
     def post(self, request, *args, **kwargs):
         logger.debug(f"Received callback {request.path} {request.method}")
+
+        received_token = request.headers['Token']
+
+        computed_hash = hmac.new(
+            settings.CALLBACK_SECRET.encode('utf-8'),
+            request.body,
+            hashlib.sha256
+        ).digest()
+        computed_token = base64.b64encode(computed_hash).decode()
+
+        if not hmac.compare_digest(computed_token, received_token):
+            logger.error('Invalid token received')
+            return HttpResponse(status=401)
 
         try:
             data = json.loads(request.body.decode('utf-8'))
