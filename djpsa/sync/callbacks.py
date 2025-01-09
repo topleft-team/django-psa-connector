@@ -8,10 +8,13 @@ class CallbacksHandler:
     field_names = None
     ident_field = None
     base_callback_data = None
-    NEEDED_CALLBACKS = None
 
     def __init__(self):
         self.client = self.api_client()
+
+    @property
+    def needed_callbacks(self):
+        raise NotImplementedError
 
     def _build_get_conditions(self):
         raise NotImplementedError
@@ -80,10 +83,12 @@ class CallbacksHandler:
         """
         Return a list of callbacks
         """
-        result = self.NEEDED_CALLBACKS.copy()
-        for cb in result:
+        callbacks = self.needed_callbacks
+        result = []
+        for key, cb in callbacks.items():
             cb['url'] = f"{self.settings['callback_host']}" \
-                        f"{self.settings['callback_url']}"
+                        f"{self.settings['callback_endpoints'][key]}"
+            result.append(cb)
         return result
 
     def _clean_callbacks(self, callbacks):

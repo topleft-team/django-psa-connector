@@ -6,7 +6,7 @@ from retrying import retry
 from json import JSONDecodeError
 
 from djpsa.api import exceptions as exc
-from djpsa.utils import DjPSASettings
+from djpsa.utils import get_djpsa_settings
 
 
 RETRY_WAIT_EXPONENTIAL_MULTAPPLIER = 1000  # Initial number of milliseconds to
@@ -32,7 +32,7 @@ class APIClient:
     def __init__(self, conditions=None):
         self.conditions = conditions if conditions else []
 
-        self.request_settings = DjPSASettings.get_settings()
+        self.request_settings = get_djpsa_settings()
         if hasattr(settings, 'DJPSA_CONF_CALLABLE'):
             self.request_settings.update(
                 settings.DJPSA_CONF_CALLABLE().get('request', {}))

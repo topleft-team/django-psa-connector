@@ -1,7 +1,7 @@
 import logging
 
 from djpsa.halo.api import WebhookAPIClient, NotificationAPIClient
-from djpsa.utils import DjPSASettings
+from djpsa.utils import get_djpsa_settings
 from djpsa.sync.callbacks import CallbacksHandler
 
 logger = logging.getLogger(__name__)
@@ -79,22 +79,25 @@ class HaloCallbacksHandler(CallbacksHandler):
         'systemuse': '',
         'version_number': '0.0.1'
     }
-    # NOTE: Halo doesn't give you anything to identify callbacks as your
-    #  callbacks, so the 'callback_description' should be used to filter
-    #  out callbacks that you shouldn't delete.
-    NEEDED_CALLBACKS = [
-        {
-            'name': f'{DjPSASettings.get_settings()['callback_description']} '
-                    'Ticket Callback',
-            'note': 'faults',
-            'url': None,
-        },
-    ]
 
     def __init__(self):
-        self.settings = DjPSASettings.get_settings()
+        self.settings = get_djpsa_settings()
         self.event_api = NotificationAPIClient()
         super().__init__()
+
+    @property
+    def needed_callbacks(self):
+        # NOTE: Halo doesn't give you anything to identify callbacks as your
+        #  callbacks, so the 'callback_description' should be used to filter
+        #  out callbacks that you shouldn't delete.
+        return {
+            "ticket": {
+                'name': f'{get_djpsa_settings()['callback_description']} '
+                        'Ticket Callback',
+                'note': 'faults',
+                'url': None,
+            },
+        }
 
     def _build_get_conditions(self):
         return {}
@@ -102,8 +105,8 @@ class HaloCallbacksHandler(CallbacksHandler):
     def _clean_callbacks(self, callbacks):
 
         # Create a new list of elements from the callbacks list
-        # that only have a 'note' field, and that note field
-        # contains the string 'Kanban application'
+        # that where the name field contains the string field
+        # defined in 'callback_description'.
 
         return [
             cb for cb in callbacks
