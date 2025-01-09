@@ -59,8 +59,7 @@ def get_djpsa_settings():
         'timeout': 30.0,
         'batch_size': 100,
         'max_attempts': 3,
-        'callback_host': None,
-        'callback_endpoints': None,
+        'callback_root': None,
         'callback_description': 'django-psa',
     }
 

@@ -83,12 +83,11 @@ class CallbacksHandler:
         """
         Return a list of callbacks
         """
-        callbacks = self.needed_callbacks
-        result = []
-        for key, cb in callbacks.items():
-            cb['url'] = f"{self.settings['callback_host']}" \
-                        f"{self.settings['callback_endpoints'][key]}"
-            result.append(cb)
+        result = self.needed_callbacks
+        for cb in result:
+            cb['url'] = f"{self.settings['callback_root']}" \
+                        f"{cb['url']}"
+
         return result
 
     def _clean_callbacks(self, callbacks):
