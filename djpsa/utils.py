@@ -51,3 +51,19 @@ def redis_lock(lock_name, timeout, blocking_timeout):
             lock.release()
         except redis.exceptions.LockNotOwnedError:
             pass
+
+
+def get_djpsa_settings():
+    # Make some defaults
+    request_settings = {
+        'timeout': 30.0,
+        'batch_size': 100,
+        'max_attempts': 3,
+        'callback_root': None,
+        'callback_description': 'django-psa',
+    }
+
+    if hasattr(settings, 'DJPSA_CONF_CALLABLE'):
+        request_settings.update(settings.DJPSA_CONF_CALLABLE())
+
+    return request_settings
