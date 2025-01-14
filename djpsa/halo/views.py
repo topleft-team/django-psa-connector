@@ -57,6 +57,6 @@ class CallBackView(views.CsrfExemptMixin,
         if sync is None:
             # This is normal if we get a callback for a record type we don't
             # care about somehow.
-            return HttpResponse(status=404)
+            return HttpResponse(status=400)
 
         return HttpResponse(status=200)

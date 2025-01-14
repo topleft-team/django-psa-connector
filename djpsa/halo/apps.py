@@ -1,4 +1,5 @@
 from django.apps import AppConfig
+from django.conf import settings
 
 
 class HaloConfig(AppConfig):
@@ -7,4 +8,5 @@ class HaloConfig(AppConfig):
     label = 'halo'
 
     def ready(self):
-        pass
+        from djpsa.halo import provider
+        settings.PROVIDER = provider

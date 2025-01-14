@@ -1,16 +1,16 @@
 import json
 
 from django.core.management.base import BaseCommand, CommandError
+from django.conf import settings
 
 from djpsa.api.exceptions import APIClientError
 
 
-class BaseListCommand(BaseCommand):
-    help = 'List our existing callbacks on ConnectWise.'
-    callback_handler = None
+class Command(BaseCommand):
+    help = 'List our existing callbacks.'
 
     def handle(self, *args, **options):
-        handler = self.callback_handler()
+        handler = settings.PROVIDER.callback_handler()
         try:
             callbacks = handler.get_callbacks()
         except APIClientError as e:

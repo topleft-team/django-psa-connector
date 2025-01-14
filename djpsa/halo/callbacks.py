@@ -5,7 +5,7 @@ import string
 from django.conf import settings
 
 from djpsa.halo.api import WebhookAPIClient, NotificationAPIClient
-from djpsa.utils import DjPSASettings
+from djpsa.utils import get_djpsa_settings
 from djpsa.sync.callbacks import CallbacksHandler
 
 logger = logging.getLogger(__name__)
@@ -85,22 +85,26 @@ class HaloCallbacksHandler(CallbacksHandler):
         'systemuse': '',
         'version_number': '0.0.1'
     }
-    # NOTE: Halo doesn't give you anything to identify callbacks as your
-    #  callbacks, so the 'callback_description' should be used to filter
-    #  out callbacks that you shouldn't delete.
-    NEEDED_CALLBACKS = [
-        {
-            'name': f'{DjPSASettings.get_settings()['callback_description']} '
-                    'Ticket Callback',
-            'note': 'faults',
-            'url': None,
-        },
-    ]
 
     def __init__(self):
-        self.settings = DjPSASettings.get_settings()
+        self.settings = get_djpsa_settings()
         self.event_api = NotificationAPIClient()
         super().__init__()
+
+    @property
+    def needed_callbacks(self):
+        # NOTE: Halo doesn't give you anything to identify callbacks as your
+        #  callbacks, so the 'callback_description' should be used to filter
+        #  out callbacks that you shouldn't delete.
+        callback_description = self.settings['callback_description']
+
+        return [
+            {
+                'name': f'{callback_description} Ticket Callback',
+                'note': 'faults',
+                'url': "ticket/",
+            },
+        ]
 
     def _build_get_conditions(self):
         return {}
@@ -128,13 +132,15 @@ class HaloCallbacksHandler(CallbacksHandler):
     def _clean_callbacks(self, callbacks):
 
         # Create a new list of elements from the callbacks list
-        # that only have a 'note' field, and that note field
-        # contains the string 'Kanban application'
+        # that where the name field contains the string field
+        # defined in 'callback_description'.
+
+        names_to_check = [cb['name'] for cb in self.get_needed_callbacks()]
 
         return [
             cb for cb in callbacks
             if 'name' in cb
-            and self.settings['callback_description'] in cb['name']
+               and any(name in cb['name'] for name in names_to_check)
         ]
 
     def _post_register_processing(self, registered_callback):

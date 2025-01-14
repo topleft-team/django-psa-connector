@@ -8,10 +8,13 @@ class CallbacksHandler:
     field_names = None
     ident_field = None
     base_callback_data = None
-    NEEDED_CALLBACKS = None
 
     def __init__(self):
         self.client = self.api_client()
+
+    @property
+    def needed_callbacks(self):
+        raise NotImplementedError
 
     def _build_get_conditions(self):
         raise NotImplementedError
@@ -73,16 +76,22 @@ class CallbacksHandler:
         return needed_callbacks, current_callbacks
 
     def get_callbacks(self):
-        return self.client.get(**self._build_get_conditions())
+        callbacks = self.client.get(**self._build_get_conditions())
+
+        # Don't scan through any callbacks if they aren't ours
+        cleaned_callbacks = self._clean_callbacks(callbacks)
+
+        return cleaned_callbacks
 
     def get_needed_callbacks(self):
         """
         Return a list of callbacks
         """
-        result = self.NEEDED_CALLBACKS.copy()
+        result = self.needed_callbacks
         for cb in result:
-            cb['url'] = f"{self.settings['callback_host']}" \
-                        f"{self.settings['callback_url']}"
+            cb['url'] = f"{self.settings['callback_root']}" \
+                        f"{cb['url']}"
+
         return result
 
     def _clean_callbacks(self, callbacks):
@@ -96,12 +105,9 @@ class CallbacksHandler:
         needed_callbacks = self.get_needed_callbacks()
         current_callbacks = self.get_callbacks()
 
-        # Don't scan through any callbacks if they aren't ours
-        cleaned_callbacks = self._clean_callbacks(current_callbacks)
-
         callbacks_to_add, callbacks_to_remove = \
             self._calculate_missing_unneeded_callbacks(
-                needed_callbacks, cleaned_callbacks
+                needed_callbacks, current_callbacks
             )
 
         for callback in callbacks_to_add:
@@ -113,8 +119,5 @@ class CallbacksHandler:
         """Do the needful to ensure our callbacks are gone."""
         callbacks = self.get_callbacks()
 
-        # Don't scan through any callbacks if they aren't ours
-        cleaned_callbacks = self._clean_callbacks(callbacks)
-
-        for callback in cleaned_callbacks:
+        for callback in callbacks:
             self._delete_callback(callback)
