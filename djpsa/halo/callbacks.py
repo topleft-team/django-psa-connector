@@ -90,10 +90,11 @@ class HaloCallbacksHandler(CallbacksHandler):
         # NOTE: Halo doesn't give you anything to identify callbacks as your
         #  callbacks, so the 'callback_description' should be used to filter
         #  out callbacks that you shouldn't delete.
+        callback_description = self.settings['callback_description']
+
         return [
             {
-                'name': f'{get_djpsa_settings()['callback_description']} '
-                        'Ticket Callback',
+                'name': f'{callback_description} Ticket Callback',
                 'note': 'faults',
                 'url': "ticket/",
             },

@@ -77,7 +77,12 @@ class CallbacksHandler:
         return needed_callbacks, current_callbacks
 
     def get_callbacks(self):
-        return self.client.get(**self._build_get_conditions())
+        callbacks = self.client.get(**self._build_get_conditions())
+
+        # Don't scan through any callbacks if they aren't ours
+        cleaned_callbacks = self._clean_callbacks(callbacks)
+
+        return cleaned_callbacks
 
     def get_needed_callbacks(self):
         """
@@ -101,12 +106,9 @@ class CallbacksHandler:
         needed_callbacks = self.get_needed_callbacks()
         current_callbacks = self.get_callbacks()
 
-        # Don't scan through any callbacks if they aren't ours
-        cleaned_callbacks = self._clean_callbacks(current_callbacks)
-
         callbacks_to_add, callbacks_to_remove = \
             self._calculate_missing_unneeded_callbacks(
-                needed_callbacks, cleaned_callbacks
+                needed_callbacks, current_callbacks
             )
 
         for callback in callbacks_to_add:
@@ -118,8 +120,5 @@ class CallbacksHandler:
         """Do the needful to ensure our callbacks are gone."""
         callbacks = self.get_callbacks()
 
-        # Don't scan through any callbacks if they aren't ours
-        cleaned_callbacks = self._clean_callbacks(callbacks)
-
-        for callback in cleaned_callbacks:
+        for callback in callbacks:
             self._delete_callback(callback)
