@@ -109,10 +109,12 @@ class HaloCallbacksHandler(CallbacksHandler):
         # that where the name field contains the string field
         # defined in 'callback_description'.
 
+        names_to_check = [cb['name'] for cb in self.get_needed_callbacks()]
+
         return [
             cb for cb in callbacks
             if 'name' in cb
-            and self.settings['callback_description'] in cb['name']
+               and any(name in cb['name'] for name in names_to_check)
         ]
 
     def _post_register_processing(self, registered_callback):
