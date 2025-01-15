@@ -1,4 +1,8 @@
 import logging
+import secrets
+import string
+
+from django.conf import settings
 
 from djpsa.halo.api import WebhookAPIClient, NotificationAPIClient
 from djpsa.utils import get_djpsa_settings
@@ -102,6 +106,22 @@ class HaloCallbacksHandler(CallbacksHandler):
 
     def _build_get_conditions(self):
         return {}
+
+    def _build_post_data(self, callback):
+
+        auth_data = {
+            'authentication_header': "Token",
+            'basic_password': settings.CALLBACK_SECRET,
+            'authentication_type': "3",
+        }
+
+        callback = {
+            **callback,
+            **auth_data,
+        }
+
+        callback_post_data = {**self.base_callback_data, **callback}
+        return callback_post_data
 
     def _clean_callbacks(self, callbacks):
 

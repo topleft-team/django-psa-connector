@@ -20,8 +20,7 @@ class CallbacksHandler:
         raise NotImplementedError
 
     def _build_post_data(self, callback):
-        callback_post_data = {**self.base_callback_data, **callback}
-        return callback_post_data
+        raise NotImplementedError
 
     def _post_register_processing(self, registered_callback):
         pass
