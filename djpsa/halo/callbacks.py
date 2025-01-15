@@ -10,8 +10,6 @@ from djpsa.sync.callbacks import CallbacksHandler
 
 logger = logging.getLogger(__name__)
 
-HALO_CALLBACK_USERNAME = 'halowebhookauthentication'
-
 event_data = {
     'faults': [{
         "webhook_id": None,
@@ -108,10 +106,6 @@ class HaloCallbacksHandler(CallbacksHandler):
 
     def _build_get_conditions(self):
         return {}
-
-    def _generate_password(self):
-        return ''.join(secrets.choice(
-            f"{string.ascii_letters}{string.digits}") for _ in range(20))
 
     def _build_post_data(self, callback):
 
