@@ -1,5 +1,6 @@
 import logging
 import requests
+import hashlib
 from django.conf import settings
 from django.core.cache import cache
 
@@ -10,7 +11,7 @@ from djpsa.utils import LockNotAcquiredError, redis_lock
 logger = logging.getLogger(__name__)
 
 
-HALO_TOKEN_CACHE_NAME = 'halo_token'
+HALO_TOKEN_CACHE_NAME = 'halo_token:{}:{}'
 CACHE_EXPIRE_TIME = 3540  # 1 hour less 1 minute so the token expires
 # locally before expiring remotely, so we avoid access denied errors.
 TOKEN_REQUEST_TIMEOUT = 30
@@ -190,8 +191,16 @@ class HaloAPITokenFetcher:
             # Get a new token without locking
             return self._get_new_token_and_save()
 
+    def _get_cache_name(self):
+        """Return the cache name for the token."""
+        # One-way hash of secret so it's not stored in plain text
+        secret_hash = hashlib.sha256(
+            self.credentials.client_secret.encode('utf-8')
+        ).hexdigest()
+        return HALO_TOKEN_CACHE_NAME.format(self.credentials.client_id, secret_hash)
+
     def _get_saved_token(self):
-        return cache.get(HALO_TOKEN_CACHE_NAME)
+        return cache.get(self._get_cache_name())
 
     def _get_new_token_and_save(self):
         logger.debug('Getting new access token')
@@ -213,5 +222,5 @@ class HaloAPITokenFetcher:
             logger.error(f"Failed to get new token: {e}")
             raise APIError('{}'.format(e))
 
-        cache.set(HALO_TOKEN_CACHE_NAME, token, CACHE_EXPIRE_TIME)
+        cache.set(self._get_cache_name(), token, CACHE_EXPIRE_TIME)
         return token
