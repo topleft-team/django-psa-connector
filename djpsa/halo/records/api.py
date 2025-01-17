@@ -13,3 +13,4 @@ from djpsa.halo.records.halouser.api import UserAPI
 from djpsa.halo.records.tickettype.api import TicketTypeAPI
 from djpsa.halo.records.action.api import ActionAPI
 from djpsa.halo.records.team.api import TeamAPI
+from djpsa.halo.records.budgettype.api import BudgetTypeAPI
