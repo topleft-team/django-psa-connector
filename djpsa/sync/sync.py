@@ -122,13 +122,14 @@ class Synchronizer:
             self.client.add_condition(last_sync_job_condition)
 
         results = SyncResults()
+
+        # Set of IDs of all records prior to sync,
+        # to find stale records for deletion.
+        initial_ids = self._instance_ids() if self.full else []
+
         results = self.fetch_records(results)
 
         if self.full:
-            # Set of IDs of all records prior to sync,
-            # to find stale records for deletion.
-            initial_ids = self._instance_ids()
-
             results.deleted_count = self.prune_stale_records(
                 initial_ids, results.synced_ids
             )
