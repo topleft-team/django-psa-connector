@@ -1,5 +1,40 @@
+from enum import Enum
+
 from django.db import models
 from model_utils import FieldTracker
+
+
+class ItilRequestType(Enum):
+    # System defined ITIL request types. We can use these to identify
+    # the type of ticket we are dealing with. This is useful for
+    # when an instance has custom ticket types beyond the default.
+    INCIDENT = 1
+    CHANGE_REQUEST = 2
+    SERVICE_REQUEST = 3
+    PROBLEM = 4
+    REQUEST_FOR_QUOTE = 20
+    ADVICE_OTHER = 21
+    PROJECTS = 22
+    TASKS = 23
+
+
+class TicketOnlyManager(models.Manager):
+    def get_queryset(self):
+        return self.get_queryset().filter(itil_requesttype__in=[
+            ItilRequestType.INCIDENT.value,
+            ItilRequestType.CHANGE_REQUEST.value,
+            ItilRequestType.SERVICE_REQUEST.value,
+            ItilRequestType.PROBLEM.value,
+            ItilRequestType.REQUEST_FOR_QUOTE.value,
+            ItilRequestType.ADVICE_OTHER.value,
+            ItilRequestType.TASKS.value,
+        ])
+
+
+class ProjectOnlyManager(models.Manager):
+    def get_queryset(self):
+        return self.get_queryset().filter(
+            itil_requesttype=ItilRequestType.PROJECTS.value)
 
 
 class Ticket(models.Model):
@@ -70,6 +105,13 @@ class Ticket(models.Model):
         models.TextField(blank=True, null=True)
     ticket_tags = models.TextField(blank=True, null=True)
     appointment_type = models.CharField(max_length=255, blank=True, null=True)
+    itil_request_type = models.IntegerField(
+        choices=[(
+            e.value,
+            e.name.replace('_', ' ').title()
+        ) for e in ItilRequestType],
+        default=ItilRequestType.INCIDENT.value,
+    )
 
     use = models.CharField(max_length=255, blank=True, null=True)
 
